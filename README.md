@@ -18,8 +18,8 @@ A 5-minute anime-style short film for the **DADC Short Film Festival 2026** (IIT
 
 ## How it is made
 
-Everything is generated from code: Blender 5.1 (EEVEE) scenes built and rendered by Python scripts, with a Python
-compositor and a synthesised soundtrack.
+Everything is generated from code: Blender 5.1 (EEVEE) scenes built and rendered by Python scripts, a Python
+compositor, and a soundtrack assembled in code from recorded instruments, field recordings and synthesis.
 
 - **Characters:** MPFB/MakeHuman base meshes (CC0) with scripted garments, hair and anime eyes. `film/lib/face.py` is
   a facial-expression engine with brows, lids, mouth via face bones, blinks, lip-sync from the voice clips, tears and eye
@@ -30,11 +30,18 @@ compositor and a synthesised soundtrack.
 - **Shots:** one build + render script per shot in `film/shots/`. The split-screen halves live in `film/shots/half.py`.
 - **Anime look:** cel ramps with soft edges, inverted-hull ink outlines and animation on twos. In post
   (`film/post/edit.py`): impact frames, manga focus lines, a panel-slam montage, speed lines, light sweeps for time
-  jumps, god rays, ink edges, line boil and paper grain.
+  jumps, god rays, ink edges and paper grain, plus the burning fragments of Aryabhata in the last shot.
+- **Life and set passes (V3):** `film/lib/life.py` adds breathing, idle motion, a handheld camera, swaying trees and
+  depth of field on close-ups; `film/lib/detail.py` paints variation and contact shadows into every set surface and
+  chamfers box edges, against the blockout look.
 - **Split-screen grammar:** Hyderabad (the son) on the left and Abu Dhabi (the father) on the right, as two slanted manga
   panels on a starry gap that widens over the years. Only the satellite crosses it, until re-entry burns it away.
-- **Sound** (`film/post/audio.py`): tanpura drone, a plucked "promise" motif, pads, percussion and all sound effects
-  synthesised with numpy/scipy. The stereo field follows the split.
+- **Sound** (`film/post/audio.py`): an original cue sheet played by recorded instruments (`film/post/sampler.py`:
+  upright piano for the "promise" motif, string sections, glockenspiel, orchestral bass drum) over a synthesised
+  tanpura drone. Ambiences and foley are CC0 field recordings (`film/post/sfx.py`, fetched by `film/post/fetch_sfx.py`
+  with an attribution manifest), each matched in loudness to the cue it replaces. The stereo field follows the split.
+- **Voices** (`film/post/vo_edge.py`): Hindi/Urdu dialogue and English radio from neural TTS, built phrase by phrase
+  inside each subtitle window; the lip-sync is baked from the same clips at render time.
 - **Timeline** (`film/post/timeline.py`): the master edit (7,200 frames at 24 fps), subtitles, captions and voice placement.
 
 Run a shot: `blender -b --factory-startup -P film/shots/half.py -- preset=J2 final`
@@ -46,16 +53,32 @@ Rendered frames, videos, `.blend` files and downloaded assets are not committed 
 - Earth maps: NASA Blue Marble / Black Marble (public domain), via Wikimedia Commons
 - Human base meshes: MPFB / MakeHuman (CC0)
 - Fonts (SIL Open Font License): IBM Plex Mono, Shippori Mincho, Noto Sans
-- Voices: Piper TTS models: "rohan" (IIT Madras IndicTTS), "pratham", "alan" (en_GB), used under their published licences
+- Instruments: VS Chamber Orchestra 2: Community Edition (CC0, Versilian Studios; upright piano by Simon Dalzell / Ivy Audio)
+- Sound effects: CC0 recordings from Freesound; titles, authors and links in `film/assets/dl/sfx/manifest.json`
+  (regenerate with `python film/post/fetch_sfx.py`)
+- Voices: Microsoft neural TTS (V3); V1-V2 used Piper models ("rohan", IIT Madras IndicTTS; "pratham"; "alan")
 
 ## AI use (declared, as required by the festival)
 - **Concept and script:** developed with Claude (Anthropic), ChatGPT (OpenAI) and Gemini (Google) as brainstorming and
   critique partners. The team chose the story, setting, language and creative direction.
 - **Production code:** scene, character, animation, facial-expression, compositing and audio scripts written by Claude
   (an AI coding assistant) under the team's direction. All frames are rendered locally from these 3D scenes.
-- **Voices:** AI text-to-speech (Piper, offline neural TTS).
+- **Voices:** AI text-to-speech: Microsoft neural voices (hi-IN Madhur, ur-IN Salman, hi-IN Swara, en-IN Prabhat).
+  Earlier versions used Piper.
 - **Not used:** no generative image or video model created any frame.
 
 The family is fictional. Aryabhata's history is real: launched 19 April 1975, power failure after four days,
 mainframe signals until March 1981, re-entry in February 1992. The re-entry being visible over Hyderabad is
 poetic licence.
+
+## Versions
+
+- **V1:** first full cut.
+- **V2:** after team feedback ("who is on the left?", "picture moving, not animation", "eyes look like crying"):
+  manga-panel split with place/person captions, hand-drawn ink, corrected staging (legs through furniture, crossed
+  arms, the door knock), clear eyes by default and closed eyes in sleep.
+- **V3:** after team feedback on V2 ("low poly", "bad sound", "SFX", "the ending is not understandable", "watery"):
+  recorded instruments and real sound effects, natural Hindi/Urdu voices, the set detail pass, the life pass, the
+  line-boil wobble removed, and an ending you can follow: All India Radio announcing Aryabhata's return, the father
+  shown home in the lane, a readable reveal from the lane up to the roof, "Beta... I'm home", and the promise
+  paid off: "Every night... I looked up." / "So did I, Abba."
