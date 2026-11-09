@@ -13,7 +13,7 @@ SHOT = {
     "I3L": dict(dof=2.4), "I3R": dict(dof=2.0, push=0.05), "I1R": dict(dof=2.0), "G1L": dict(dof=2.4, push=0.05),
     "F2L": dict(dof=2.2), "F2R": dict(dof=2.0), "F5L": dict(dof=2.8), "F5R": dict(dof=2.8), "E1R": dict(dof=2.2),
     "F1L": dict(dof=3.2), "G2R": dict(dof=2.4), "I1L": dict(dof=3.5), "E3R": dict(dof=3.0),
-    "I4W": dict(dof=2.8, focus="SON_92"), "B5": dict(cam=0.4), "I4W": dict(cam=0.3), "K1W": dict(cam=0.5), "A2L": dict(cam=0.6), "A2R": dict(cam=0.6),
+    "I4W": dict(dof=2.8, focus="SON_92", cam=0.3), "B5": dict(cam=0.4), "K1W": dict(cam=0.5), "A2L": dict(cam=0.6), "A2R": dict(cam=0.6),
 }
 SLEEPING = {("B5", "FATHER_75_HOME"), ("B5", "BOY_75"), ("F5R", "FATHER_75_WORK")}
 AGITATED = {("I3L", "SON_92"), ("I3R", "FATHER_92"), ("J1", "FATHER_92"), ("J2", "SON_92"), ("G1L", "BOY_81"), ("J3", "FATHER_92")}
