@@ -10,6 +10,11 @@ def v4():
     return os.path.exists(os.path.join(ROOT, "v4.flag")) or os.environ.get("AF_V4") == "1"
 
 
+def v5():
+    """V5 switch: film/v5.flag, or AF_V5=1 for previews"""
+    return os.path.exists(os.path.join(ROOT, "v5.flag")) or os.environ.get("AF_V5") == "1"
+
+
 def stable_seed(*parts):
     """hash() is salted per process; renders and repair renders must get the same noise"""
     import zlib

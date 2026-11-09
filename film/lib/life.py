@@ -277,6 +277,46 @@ def camera_move(cam, sid, n):
     return f"{D.length:.2f} m (scale {scale:g}, subject at {d:.1f} m)"
 
 
+# ---------------------------------------------------------------- V5: attention shifts (people glance away and back)
+GLANCE = {"F1L", "F1R", "F3L", "F3R", "G2L", "G3L", "G3R", "E2L", "E2R", "C2L", "C2R", "I1L", "E3L", "F4R", "G1R"}
+
+
+def glances(rig, sid, n, seed):
+    """every 50-90 frames: a head turn of 10-20 degrees (and a little pitch) held for ~1 s, then back; stepped on twos,
+    added on top of the shot's own head animation (sampled first)"""
+    import af
+    if sid not in GLANCE or rig is None or "head" not in rig.pose.bones:
+        return 0
+    rnd = random.Random(seed)
+    ev, f = [], rnd.randint(18, 50)
+    while f < n - 30:
+        ev.append((f, rnd.choice((-1, 1)) * rnd.uniform(10, 20), rnd.uniform(-4, 6), rnd.randint(18, 36)))
+        f += rnd.randint(50, 90)
+    if not ev:
+        return 0
+    fcs = {}
+    for axis in (0, 1):
+        fcs[axis] = _fc(rig, "head", axis)
+    frames = list(range(1, n + 1, 2))
+    base = {a: [fcs[a].evaluate(fr) for fr in frames] for a in fcs}
+    def off(fr):
+        y = x = 0.0
+        for f0, yaw, pitch, hold in ev:
+            t_in, t_out = f0, f0 + 6 + hold
+            if t_in <= fr <= t_out + 6:
+                k = min(1.0, (fr - t_in) / 6.0) if fr < t_in + 6 else (1.0 if fr <= t_out else max(0.0, 1 - (fr - t_out) / 6.0))
+                k = k * k * (3 - 2 * k)
+                y += yaw * k
+                x += pitch * k
+        return x, y
+    for j, fr in enumerate(frames):
+        x, y = off(fr)
+        for a, d in ((0, x), (1, y)):
+            kp = fcs[a].keyframe_points.insert(fr, base[a][j] + math.radians(d))
+            kp.interpolation = "CONSTANT"
+    return len(ev)
+
+
 def apply(sid, n_frames):
     """call from Shot.finish() after all acting is baked"""
     import af
@@ -285,6 +325,9 @@ def apply(sid, n_frames):
     for i, r in enumerate(rigs):
         base = r.name.split(".")[0]
         breathe_and_idle(r, sid, base, n_frames, seed=af.stable_seed(sid, base, i))
+    if af.v5():
+        for i, r in enumerate(rigs):
+            glances(r, sid, n_frames, af.stable_seed(sid, r.name, "glance"))
     env = environment_life(n_frames, seed=af.stable_seed(sid, "env"))
     cam = scene.camera
     moved = camera_move(cam, sid, n_frames) if af.v4() else None
