@@ -621,6 +621,62 @@ def billboard_rot(face_dir):
     return Vector(face_dir).to_track_quat("Z", "Y").to_euler()
 
 
+def cumulus(name, center, size=(60, 30, 22), puffs=26, seed=0, mat=None, flat_bottom=True):
+    """Anime cumulus: union of displaced spheres, flat bottom, toon-shaded by the key light."""
+    rnd = random.Random(seed)
+    sx, sy, sz = size
+    bm_ = bmesh.new()
+    for i in range(puffs):
+        t = rnd.random()
+        # mound distribution: bigger puffs near the centre/top
+        x = rnd.gauss(0, sx * 0.28)
+        y = rnd.gauss(0, sy * 0.25)
+        r = (sz * 0.55) * (1.0 - min(1.0, abs(x) / (sx * 0.6))) ** 0.6 * rnd.uniform(0.55, 1.0) + sz * 0.12
+        z = r * 0.55 + rnd.uniform(0, sz * 0.35) * (1.0 - abs(x) / (sx * 0.7))
+        res = bmesh.ops.create_icosphere(bm_, subdivisions=3, radius=r)
+        for v in res["verts"]:
+            n = v.co.normalized()
+            v.co = v.co * (1 + 0.06 * math.sin(n.x * 9 + i) * math.cos(n.z * 7 + seed)) + Vector((x, y, z))
+            if flat_bottom and v.co.z < 0:
+                v.co.z *= 0.12
+    for f in bm_.faces:
+        f.smooth = True
+    me = bpy.data.meshes.new(name)
+    bm_.to_mesh(me)
+    bm_.free()
+    ob = link(bpy.data.objects.new(name, me))
+    ob.location = Vector(center)
+    if mat:
+        me.materials.append(mat)
+    return ob
+
+
+def moon(name, loc, size, phase=0.38, tilt=0.12, col_dark="#7FA2E0", col_lit="#FFF4D6", glow=0.35, cam_dir=None):
+    """Crescent moon card with halo; billboarded toward cam_dir (vector from moon to camera)."""
+    mm, nt = new_mat(name)
+    tc = N(nt, "ShaderNodeTexCoord")
+    sep = N(nt, "ShaderNodeSeparateXYZ")
+    L(nt, O(tc, "Object"), sep.inputs[0])
+    r1 = math_(nt, "SQRT", math_(nt, "ADD", math_(nt, "POWER", O(sep, "X"), 2), math_(nt, "POWER", O(sep, "Y"), 2)))
+    dx = math_(nt, "SUBTRACT", O(sep, "X"), phase)
+    r2 = math_(nt, "SQRT", math_(nt, "ADD", math_(nt, "POWER", dx, 2), math_(nt, "POWER", math_(nt, "SUBTRACT", O(sep, "Y"), tilt), 2)))
+    disc = maprange(nt, r1, 0.40, 0.412, 1, 0)
+    cut = maprange(nt, r2, 0.36, 0.372, 0, 1)
+    cres = math_(nt, "MULTIPLY", disc, cut)
+    halo = maprange(nt, r1, 0.4, 1.0, glow, 0.0, interp="SMOOTHSTEP")
+    a = math_(nt, "MAXIMUM", cres, halo)
+    colm = mixcol(nt, cres, col_dark, col_lit)
+    st = maprange(nt, cres, 0, 1, 1.0, 6.0)
+    finish_emission(mm, nt, colm, 1.0, a, blended=True)
+    em = [n for n in nt.nodes if n.bl_idname == "ShaderNodeEmission"][0]
+    L(nt, st, I(em, "Strength"))
+    ob = plane(name, 2, 2, loc, mat=mm)
+    ob.scale = (size, size, 1)
+    if cam_dir is not None:
+        ob.rotation_euler = billboard_rot(cam_dir)
+    return ob
+
+
 # ------------------------------------------------------------------ vegetation
 def palm(name, loc, height=9.0, lean=(0.25, 0.05), bend=0.12, fronds=15, frond_len=3.8,
          seed=1, trunk_mat=None, frond_mat=None, outline=None, sway=True):

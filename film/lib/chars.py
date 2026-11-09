@@ -165,19 +165,109 @@ def kurta(body, rig, name, mat, length="knee", sleeves="full", inflate=0.014):
 def shirt(body, rig, name, mat, sleeves="half", tuck=True, inflate=0.011):
     H = ref_heights(body)
     bones_ok = set(UPPER_CORE) | {"neck01"} | UPPER_ARM | (LOWER_ARM if sleeves == "full" else set())
-    waist = H["pelvis"].z + (0.06 if tuck else -0.06)
-    return garment(body, rig, name, "helper-tights",
-                   lambda co, d: (d in bones_ok and co.z > waist) or (d in LEGS and not tuck and co.z > waist),
-                   inflate=inflate, material=mat)
+    waist = H["pelvis"].z + (0.06 if tuck else -0.07)
+    ob = garment(body, rig, name, "helper-tights",
+                 lambda co, d: (d in bones_ok and co.z > waist) or (d in LEGS and co.z > waist),
+                 inflate=inflate, material=mat)
+    if not tuck:
+        flatten_lower_boundary(ob, band=0.06)
+    return ob
 
 
-def trousers(body, rig, name, mat, length="full", inflate=0.016):
+def _smooth01(a, b, x):
+    t = max(0.0, min(1.0, (x - a) / (b - a)))
+    return t * t * (3 - 2 * t)
+
+
+def loosen_legs(ob, rig, r_top=0.098, r_hem=0.085, t0=0.10, t1=0.32):
+    """Straight-cut trouser legs: push each vertex out to a smooth radius profile around the leg's bone axis
+    (thigh -> ankle), so the cloth hangs instead of clinging to knees, calves and seat."""
+    bpy.context.view_layer.update()
+    mw = ob.matrix_world
+    mwi = mw.inverted()
+    legs = {}
+    for side in ("L", "R"):
+        A = rig.matrix_world @ rig.data.bones[f"upperleg01.{side}"].head_local
+        B = rig.matrix_world @ rig.data.bones[f"lowerleg02.{side}"].tail_local
+        legs[side] = (A, B)
+    cx = (legs["L"][0].x + legs["R"][0].x) / 2
+    for v in ob.data.vertices:
+        p = mw @ v.co
+        side = "L" if p.x > cx else "R"
+        A, B = legs[side]
+        ax = B - A
+        Lax = ax.length
+        axn = ax / Lax
+        t = (p - A).dot(axn) / Lax
+        if t < t0:
+            continue
+        q = A + axn * (min(1.0, t) * Lax)
+        rv = p - q
+        rv -= axn * rv.dot(axn)
+        r = rv.length
+        if r < 1e-6:
+            continue
+        R = r_top + (r_hem - r_top) * min(1.0, max(0.0, t))
+        w = _smooth01(t0, t1, t)
+        newr = r + (max(r, R) - r) * w
+        v.co = mwi @ (p + rv / r * (newr - r))
+    ob.data.update()
+
+
+def flatten_lower_boundary(ob, band=0.05):
+    """Straighten ragged hems: boundary vertices near the lowest boundary height snap to one level."""
+    b = bmesh.new()
+    b.from_mesh(ob.data)
+    bv = [v for v in b.verts if any(e.is_boundary for e in v.link_edges)]
+    if not bv:
+        b.free()
+        return
+    zmin = min(v.co.z for v in bv)
+    sel = [v for v in bv if v.co.z < zmin + band]
+    if sel:
+        zs = sorted(v.co.z for v in sel)
+        zm = zs[len(zs) // 2]
+        for v in sel:
+            v.co.z = zm
+    b.to_mesh(ob.data)
+    b.free()
+
+
+def flatten_leg_hems(ob, band=0.05):
+    """Per-leg version (two hem loops on trousers/shorts)."""
+    b = bmesh.new()
+    b.from_mesh(ob.data)
+    bv = [v for v in b.verts if any(e.is_boundary for e in v.link_edges)]
+    if bv:
+        zmin = min(v.co.z for v in bv)
+        cx = sum(v.co.x for v in b.verts) / len(b.verts)
+        for side in (1, -1):
+            sel = [v for v in bv if v.co.z < zmin + band and (v.co.x - cx) * side > 0]
+            if sel:
+                zs = sorted(v.co.z for v in sel)
+                zm = zs[len(zs) // 2]
+                for v in sel:
+                    v.co.z = zm
+    b.to_mesh(ob.data)
+    b.free()
+
+
+def trousers(body, rig, name, mat, length="full", inflate=0.018, r_top=0.098, r_hem=0.085, belt_mat=None):
     H = ref_heights(body)
     hem = H["ankle"].z + 0.03 if length == "full" else H["knee"].z + 0.10
-    top = H["pelvis"].z + 0.10
-    return garment(body, rig, name, "helper-tights",
-                   lambda co, d: (d in LEGS or d in ("spine05", "spine04")) and hem < co.z < top,
-                   inflate=inflate, material=mat)
+    top = H["pelvis"].z + 0.14
+    ob = garment(body, rig, name, "helper-tights",
+                 lambda co, d: (d in LEGS or d in ("spine05", "spine04", "spine03")) and hem < co.z < top,
+                 inflate=inflate, smooth_iter=10, smooth_fac=0.8, material=mat)
+    s = (H["head"].z / 1.52)
+    loosen_legs(ob, rig, r_top=r_top * s, r_hem=r_hem * s)
+    flatten_leg_hems(ob)
+    if belt_mat is not None:
+        belt = garment(body, rig, name + "_belt", "helper-tights",
+                       lambda co, d: (d in LEGS or d in ("spine05", "spine04", "spine03")) and top - 0.04 < co.z < top,
+                       inflate=inflate + 0.006, smooth_iter=6, smooth_fac=0.8, material=belt_mat)
+        return ob, belt
+    return ob
 
 
 def vest(body, rig, name, mat, inflate=0.022):
@@ -525,6 +615,87 @@ def moustache_strokes(body, width=0.033, z_top=0.019, droop=0.011, w_c=0.0125, w
             st.append((x, z, w))
         out.append(st)
     return out
+
+
+def eye_decals(body, rig, name, white_mat, iris_mat, hl_mat, w=0.030, h=0.0125, iris_r=0.0058, look=(0.0, 0.0), z_adj=0.0, lash_mat=None):
+    """Anime eyes: almond sclera + iris + highlight, ray-cast onto the eyelids, parented to the head bone."""
+    bpy.context.view_layer.update()
+    H, c, e = head_frame(body)
+    tree, _ = _bvh_of(body)
+    le = group_centroid(body, "joint-l-eye")
+    re = group_centroid(body, "joint-r-eye")
+    objs = []
+    for side, ec in (("L", le), ("R", re)):
+        hit = tree.ray_cast(Vector((ec.x, c.y - 0.4, ec.z + z_adj)), Vector((0, 1, 0)))
+        if hit[0] is None:
+            continue
+        p0, n0 = hit[0], hit[1]
+        if n0.y > 0:
+            n0 = -n0
+        # local frame on the face: u = outward (temple direction), v = up
+        out_dir = 1.0 if ec.x > c.x else -1.0
+        u = Vector((out_dir, 0, 0))
+        u = (u - n0 * u.dot(n0)).normalized()
+        v = n0.cross(u).normalized()
+        if v.z < 0:
+            v = -v
+
+        def disc(nm, center, rx, ry, lift, mat, seg=20, almond=False):
+            bm_ = bmesh.new()
+            cv = bm_.verts.new(center + n0 * lift)
+            ring = []
+            for k in range(seg):
+                a = 2 * math.pi * k / seg
+                x = math.cos(a) * rx
+                y = math.sin(a) * ry
+                if almond:
+                    y *= (1.0 - 0.35 * (x / rx) ** 2)
+                    y += (0.0025 if y > 0 else 0.0) * (1 - (x / rx) ** 2)
+                    x *= (1.0 + 0.12 * (1 if x * out_dir > 0 else 0))
+                ring.append(bm_.verts.new(center + u * x + v * y + n0 * lift))
+            for k in range(seg):
+                bm_.faces.new((cv, ring[k], ring[(k + 1) % seg]))
+            me = bpy.data.meshes.new(nm)
+            bm_.to_mesh(me)
+            bm_.free()
+            ob = bpy.data.objects.new(nm, me)
+            for col in body.users_collection:
+                col.objects.link(ob)
+            me.materials.append(mat)
+            _parent_to_bone(ob, rig, "head")
+            objs.append(ob)
+            return ob
+        disc(f"{name}_sclera{side}", p0, w / 2, h / 2, 0.0016, white_mat, almond=True)
+        ic = p0 + u * look[0] * out_dir + v * look[1]
+        disc(f"{name}_iris{side}", ic, iris_r, iris_r * 1.05, 0.0021, iris_mat)
+        disc(f"{name}_hl{side}", ic + u * (-iris_r * 0.35 * out_dir) + v * (iris_r * 0.45), iris_r * 0.32, iris_r * 0.32, 0.0026, hl_mat, seg=10)
+        # upper lash line: thin dark stroke along the top of the almond, thicker at the outer corner
+        if lash_mat is not None:
+            bm_ = bmesh.new()
+            prev = None
+            n_ = 14
+            for k in range(n_ + 1):
+                t = k / n_
+                x = (-1 + 2 * t) * (w / 2) * 1.08
+                y = (h / 2) * (1.0 - 0.35 * (x / (w / 2)) ** 2) + 0.0018 * (1 - (x / (w / 2)) ** 2)
+                outer = (x * out_dir) > 0
+                th = 0.0011 + (0.0016 * max(0.0, x * out_dir / (w / 2)))
+                pc = p0 + u * x + v * y + n0 * 0.0028
+                a = bm_.verts.new(pc + v * th)
+                b = bm_.verts.new(pc - v * th * 0.4)
+                if prev:
+                    bm_.faces.new((prev[0], prev[1], b, a))
+                prev = (a, b)
+            me = bpy.data.meshes.new(f"{name}_lash{side}")
+            bm_.to_mesh(me)
+            bm_.free()
+            ob = bpy.data.objects.new(f"{name}_lash{side}", me)
+            for col in body.users_collection:
+                col.objects.link(ob)
+            me.materials.append(lash_mat)
+            _parent_to_bone(ob, rig, "head")
+            objs.append(ob)
+    return objs
 
 
 def neckline(garment_ob, body, depth=0.02, slit=0.11, slit_w=0.012):

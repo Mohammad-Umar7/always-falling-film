@@ -35,6 +35,13 @@ M["SHIRT_BOY"] = af.toon_mat("CLOTH_SHIRT_BOY", "#E9E4D6", shadow="#9C9686", lig
 M["SHORTS"] = af.toon_mat("CLOTH_SHORTS", "#2E4A6B", shadow="#18283D", light="#4A6C91", band=0.32, light_band=0.8)
 M["SHIRT_SON"] = af.toon_mat("CLOTH_SHIRT_SON", "#5F7FA3", shadow="#334A66", light="#86A4C4", band=0.32, light_band=0.8)
 M["TROUSER_SON"] = af.toon_mat("CLOTH_TROUSER_SON", "#2A2B30", shadow="#141418", light="#45464E", band=0.32, light_band=0.8)
+M["BELT"] = af.toon_mat("CLOTH_BELT", "#1C110C", shadow="#0A0604", light="#3A2418", band=0.32, light_band=0.8)
+M["EYE_WHITE"] = af.toon_mat("EYE_WHITE", "#F2F0EA", shadow="#A8A6B8", light="#FFFFFF", band=0.25, light_band=0.9)
+M["EYE_IRIS"] = af.flat_mat("EYE_IRIS", "#24140E")
+M["EYE_HL"] = af.flat_mat("EYE_HL", "#FFFFFF", strength=1.6)
+M["EYE_LASH"] = af.flat_mat("EYE_LASH", "#140C0A")
+for mn in ("SKIN", "SKIN_BOY"):
+    M[mn].node_tree.nodes["TOON_RAMP"].color_ramp.elements[1].position = 0.22
 OUTLINE = "#0B0810"
 
 
@@ -53,15 +60,16 @@ def build(name, age, x, macros, wardrobe, hair_style, hair_mat, skin_mat, mousta
             chars.neckline(top, body, depth=0.012, slit=0.085, slit_w=0.008)
             cloth += [top, skirt]
         elif kind == "pajama":
-            cloth.append(chars.trousers(body, rig, name + "_pajama", item[1], inflate=0.022))
+            cloth.append(chars.trousers(body, rig, name + "_pajama", item[1], inflate=0.022, r_top=0.105, r_hem=0.095))
         elif kind == "shirt":
             sh = chars.shirt(body, rig, name + "_shirt", item[1], sleeves=item[2], tuck=item[3], inflate=0.012)
             chars.neckline(sh, body, depth=0.006, slit=0.07, slit_w=0.011)
             cloth.append(sh)
         elif kind == "trousers":
-            cloth.append(chars.trousers(body, rig, name + "_trousers", item[1], inflate=0.016))
+            tr, belt = chars.trousers(body, rig, name + "_trousers", item[1], inflate=0.018, r_top=0.1, r_hem=0.088, belt_mat=M["BELT"])
+            cloth += [tr, belt]
         elif kind == "shorts":
-            cloth.append(chars.trousers(body, rig, name + "_shorts", item[1], length="short", inflate=0.02))
+            cloth.append(chars.trousers(body, rig, name + "_shorts", item[1], length="short", inflate=0.02, r_top=0.11, r_hem=0.11))
         elif kind == "vest":
             cloth.append(chars.vest(body, rig, name + "_vest", item[1], inflate=0.024))
     for g in cloth:
@@ -74,7 +82,11 @@ def build(name, age, x, macros, wardrobe, hair_style, hair_mat, skin_mat, mousta
                              length=(0.07, 0.14) if hair_style == "70s" else (0.05, 0.1),
                              fringe=14 if hair_style == "70s" else 10, fringe_dir=fringe_dir, fringe_len=(0.055, 0.095))
     eyes = chars.eyes(body, rig, name + "_eye", M["EYE"])
-    brows = chars.face_ribbons(body, rig, name + "_brows", hair_mat, chars.brow_strokes(body))
+    kid = name.startswith("BOY")
+    brows = chars.face_ribbons(body, rig, name + "_brows", hair_mat,
+                               chars.brow_strokes(body, w_in=0.0072, w_out=0.0028, arch=0.0065, z_off=0.027) if kid else chars.brow_strokes(body))
+    eyes += chars.eye_decals(body, rig, name + "_eye", M["EYE_WHITE"], M["EYE_IRIS"], M["EYE_HL"],
+                             w=0.032 if kid else 0.029, h=0.015 if kid else 0.0115, iris_r=0.0068 if kid else 0.0056, lash_mat=M["EYE_LASH"])
     extra = []
     if moustache is not None:
         extra.append(chars.face_ribbons(body, rig, name + "_moustache", hair_mat, chars.moustache_strokes(body, **moustache)))
