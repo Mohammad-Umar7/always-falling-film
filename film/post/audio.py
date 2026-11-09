@@ -109,6 +109,9 @@ def put(sig, t, gain=1.0, pan=0.0, bus="music", fade=0.006):
             sig[-nf:] *= ramp[::-1, None]
     if sig.ndim == 1:
         sig = stereo(sig, pan)
+    elif np.ndim(pan) == 0 and pan != 0:
+        a = (pan + 1) * math.pi / 4
+        sig = sig * (np.array([math.cos(a), math.sin(a)], np.float32) * math.sqrt(2))
     i = int(round(t * SR))
     B = BUS[bus]
     if i < 0:
@@ -480,6 +483,71 @@ def train_horn(sec=3.5, vol=0.1):
 
 def quindar(f=2525, vol=0.12):
     return beep(f, 0.25, vol)
+
+
+# ------------------------------------------------------------------ V3: recorded instruments (post/sampler.py)
+SAMPLED = os.environ.get("AF_SYNTH_ONLY", "0") != "1"
+if SAMPLED:
+    import sampler as SM
+    _syn_pad, _syn_boom, _syn_taiko = pad, boom, taiko
+
+    def _m(note):
+        return SM.note_midi(note)
+
+    def pluck(note, sec=3.5, vel=0.6):
+        """the promise motif: an upright piano, soft hammers for quiet phrases"""
+        k = "piano_p" if vel < 0.4 else "piano_mf"
+        return SM.inst(k).note(_m(note), max(0.3, sec), amp=SM.CAL["piano"] * vel / 0.5, attack=0.002, release=0.6)
+
+    def strings(note, sec, vol=0.2, attack=0.7, release=1.4, bright=1.0):
+        m = _m(note)
+        y = SM.inst(SM.string_section(m)).note(m, max(0.15, sec - release), amp=SM.CAL["strings"] * vol / 0.2,
+                                               attack=max(0.06, attack), release=max(0.25, release))
+        if bright < 0.8:
+            y = lowpass(y, 2500 + 4000 * bright)
+        return y
+
+    def pad(chord, sec, vol=0.2, cutoff=1400, attack=1.5, release=2.0, sub=True):
+        """a low string section chord, glued with a little of the old analogue pad"""
+        parts = []
+        for note in chord:
+            m = _m(note)
+            parts.append(SM.inst(SM.string_section(m)).note(m, max(0.3, sec - release), amp=SM.CAL["strings"] * vol / 0.2 / math.sqrt(len(chord)),
+                                                            attack=max(0.15, attack), release=max(0.4, release)))
+        n = max(len(p) for p in parts)
+        out = np.zeros((n, 2), np.float32)
+        for p in parts:
+            out[:len(p)] += p
+        if cutoff < 1200:
+            out = lowpass(out, cutoff * 2.2)
+        syn = stereo(_syn_pad(chord, sec, vol * 0.35, cutoff, attack, release, sub), 0.0)
+        m2 = max(n, len(syn))
+        res = np.zeros((m2, 2), np.float32)
+        res[:n] += out
+        res[:len(syn)] += syn
+        return res
+
+    def bell(note, sec=4.0, vol=0.25):
+        """glockenspiel"""
+        return SM.inst("glock").note(_m(note), max(0.2, sec * 0.75), amp=SM.CAL["glock"] * vol / 0.1, attack=0.001, release=sec * 0.25)
+
+    def taiko(sec=1.4, vol=0.9, f0=85):
+        """low hits are a real orchestral bass drum; high 'slams' stay synthetic"""
+        if f0 >= 100:
+            return _syn_taiko(sec, vol, f0)
+        name = "bdrum_p_1" if vol < 0.2 else "bdrum_f_1" if vol < 0.3 else "bdrum_ff_1" if vol < 0.4 else "bdrum_fff_1"
+        x = SM.one_shot(f"VSCO 1 Percussion/drums/bass/{name}.wav")
+        r = f0 / 70.0                                           # tune the drum a little with f0
+        idx = np.arange(int(min(len(x) - 2, sec * SR * r) / r)) * r
+        y = np.stack([np.interp(idx, np.arange(len(x)), x[:, c]) for c in range(2)], -1).astype(np.float32)
+        y *= np.linspace(1, 0, len(y))[:, None] ** 0.5
+        return y * (SM.CAL["drum"] * vol / 0.3)
+
+    def boom(sec=3.0, vol=0.9, f0=48):
+        y = stereo(_syn_boom(sec, vol, f0), 0.0)
+        x = SM.one_shot("VSCO 1 Percussion/drums/bass/bdrum_fff_1.wav")[: len(y)]
+        y[:len(x)] += x * (SM.CAL["boom_drum"] * vol)
+        return y
 
 
 # ------------------------------------------------------------------ voices
