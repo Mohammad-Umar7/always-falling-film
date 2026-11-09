@@ -1,0 +1,10 @@
+half:F5R
+half:G1R
+half:G3R
+half:F4R
+half:F1R
+half:E3R
+half:E2R
+half:C2R
+half:G2R
+half:C1R
