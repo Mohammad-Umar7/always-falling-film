@@ -17,6 +17,8 @@ SHOT = {
 }
 SLEEPING = {("B5", "FATHER_75_HOME"), ("B5", "BOY_75"), ("F5R", "FATHER_75_WORK")}
 AGITATED = {("I3L", "SON_92"), ("I3R", "FATHER_92"), ("J1", "FATHER_92"), ("J2", "SON_92"), ("G1L", "BOY_81"), ("J3", "FATHER_92")}
+# V5 attention shifts: calm shots where a character may look away now and then (not where they watch the satellite)
+GLANCE = {"C2L", "C2R", "E2L", "E2R", "F1L", "F1R", "F3R", "F4R", "G1R", "G2L", "G3L", "G3R", "I1L"}
 
 
 def _fc(rig, bone, axis):
@@ -327,23 +329,28 @@ def camera_move(cam, sid, n):
 
 
 def glances(rig, sid, n, seed):
-    """every 50-90 frames: a head turn of 10-20 degrees (and a little pitch) held for ~1 s, then back; stepped on twos,
+    """every 90-130 frames: a head turn of 10-18 degrees (and a little pitch) held for ~1 s, then back; stepped on twos,
     added on top of the shot's own head animation (sampled first)"""
     import af
     if sid not in GLANCE or rig is None or "head" not in rig.pose.bones:
-        return 0
+        return []
     rnd = random.Random(seed)
-    ev, f = [], rnd.randint(18, 50)
-    while f < n - 30:
-        ev.append((f, rnd.choice((-1, 1)) * rnd.uniform(10, 20), rnd.uniform(-4, 6), rnd.randint(18, 36)))
-        f += rnd.randint(50, 90)
+    ev, f = [], rnd.randint(30, 70)
+    while f < n - 40:
+        ev.append((f, rnd.choice((-1, 1)) * rnd.uniform(10, 18), rnd.uniform(-4, 6), rnd.randint(20, 34)))
+        f += rnd.randint(90, 130)
     if not ev:
-        return 0
+        return []
     fcs = {}
     for axis in (0, 1):
         fcs[axis] = _fc(rig, "head", axis)
     frames = list(range(1, n + 1, 2))
+    mods = [m for a in fcs for m in fcs[a].modifiers]          # sample the keyed head only: the idle noise
+    for m in mods:                                              # modifiers stay on top and must not double
+        m.mute = True
     base = {a: [fcs[a].evaluate(fr) for fr in frames] for a in fcs}
+    for m in mods:
+        m.mute = False
     def off(fr):
         y = x = 0.0
         for f0, yaw, pitch, hold in ev:
@@ -359,7 +366,7 @@ def glances(rig, sid, n, seed):
         for a, d in ((0, x), (1, y)):
             kp = fcs[a].keyframe_points.insert(fr, base[a][j] + math.radians(d))
             kp.interpolation = "CONSTANT"
-    return len(ev)
+    return [(f0, round(yaw)) for f0, yaw, _, _ in ev]
 
 
 def apply(sid, n_frames):
@@ -372,7 +379,9 @@ def apply(sid, n_frames):
         breathe_and_idle(r, sid, base, n_frames, seed=af.stable_seed(sid, base, i))
     if af.v5():
         for i, r in enumerate(rigs):
-            glances(r, sid, n_frames, af.stable_seed(sid, r.name, "glance"))
+            g = glances(r, sid, n_frames, af.stable_seed(sid, r.name, "glance"))
+            if g:
+                print("AF: glances", sid, r.name, g)
     env = environment_life(n_frames, seed=af.stable_seed(sid, "env"))
     cam = scene.camera
     moved = camera_move(cam, sid, n_frames) if af.v4() else None
