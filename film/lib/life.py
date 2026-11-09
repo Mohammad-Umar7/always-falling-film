@@ -249,7 +249,8 @@ def camera_move(cam, sid, n):
         lat = Vector((1, 0, 0))
     lat.normalize()
     side = 1 if af.stable_seed(sid, "side") % 2 else -1
-    D = fwd * (cfg.get("dolly", 0.12) * d) + lat * (cfg.get("truck", 0.08) * d * side) + Vector((0, 0, cfg.get("crane", 0.03) * d))
+    D = (fwd * min(cfg.get("dolly", 0.12) * d, 1.5) + lat * (min(cfg.get("truck", 0.08) * d, 1.0) * side)
+         + Vector((0, 0, min(cfg.get("crane", 0.03) * d, 0.5))))          # wides: parallax without losing the composition
     sc = bpy.context.scene
     dg = bpy.context.evaluated_depsgraph_get()
     s_ = lambda f: (lambda t: t * t * (3 - 2 * t))((f - 1) / (n - 1))
