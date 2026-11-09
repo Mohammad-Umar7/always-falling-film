@@ -1,4 +1,4 @@
-﻿# ALWAYS FALLING — production bible
+# ALWAYS FALLING — production bible
 
 DADC Short Film Festival 2026 (IIT Delhi Abu Dhabi). Theme: GRAVITY. Team FirstCommit.
 Deadline: formal 6 Nov 2026 23:59 GST, extended by WhatsApp "within 2 days" (≈ 11 Nov). Confirm with secretary.

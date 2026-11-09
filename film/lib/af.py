@@ -336,6 +336,7 @@ def toon_mat(name, base, shadow=None, light=None, band=0.35, light_band=0.8,
     if light:
         stops.append((light_band, light))
     r = ramp(nt, stops, "CONSTANT", (-300, 0), fac=O(bw, "Val"))
+    r.name = "TOON_RAMP"
     col = O(r, "Color")
     if tex_sock_fn:
         col = mixcol(nt, 1.0, col, tex_sock_fn(nt), "MULTIPLY", (-100, 200))

@@ -1,4 +1,4 @@
-﻿param([string]$Script, [string[]]$Rest)
+param([string]$Script, [string[]]$Rest)
 $film = Split-Path -Parent $MyInvocation.MyCommand.Path
 $sw = [Diagnostics.Stopwatch]::StartNew()
 $out = & "C:\Program Files\Blender Foundation\Blender 5.1\blender.exe" -b --factory-startup -P (Join-Path $film $Script) -- @Rest 2>&1
