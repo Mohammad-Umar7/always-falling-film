@@ -112,6 +112,7 @@ H1_YEARS = [(4600, 1981), (4700, 1983), (4800, 1985), (4900, 1987), (5000, 1989)
 CREDITS = [
     ("title", "ALWAYS FALLING"),
     ("line", "a film by Team FirstCommit"),
+    ("small", "Mohammad Umar (team lead)  ·  Bilal Feroz  ·  Fuad Ahamed"),
     ("gap", ""),
     ("small", "Aryabhata, India's first satellite, was launched on 19 April 1975."),
     ("small", "Its instruments failed after four days; its mainframe stayed alive until March 1981."),
