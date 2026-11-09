@@ -223,7 +223,27 @@ def _path_ok(sc, dg, pts, tgt_pts):
     return True
 
 
+def _heads_in_view(sc, cam, rigs, frames, margin=0.08):
+    """camera-view coords of every character's head at these frames; False if any visible head leaves the frame"""
+    from bpy_extras.object_utils import world_to_camera_view
+    out = []
+    for f in frames:
+        sc.frame_set(int(round(f)))
+        row = []
+        for r in rigs:
+            pb = r.pose.bones.get("head")
+            if pb is None:
+                continue
+            h = r.matrix_world @ pb.head.lerp(pb.tail, 0.5)
+            v = world_to_camera_view(sc, cam, h)
+            row.append((v.x, v.y, v.z))
+        out.append(row)
+    return out
+
+
 def camera_move(cam, sid, n):
+    """V4: eased dolly + truck + crane on Track-To cameras for real parallax. The move is only kept if every character
+    that was in frame stays well inside it (start, middle, end) and the path never touches the set."""
     import af
     cfg = MOVE.get(sid, {})
     if cam is None or cfg.get("off") or n < 24:
@@ -244,42 +264,66 @@ def camera_move(cam, sid, n):
     d = (t0 - p0).length
     if d < 0.3 or (p1 - p0).length > 0.15 * d:
         return None                                # already a real move
+    sc = bpy.context.scene
+    rigs = [o for o in sc.objects if o.type == "ARMATURE" and "head" in o.pose.bones]
+    check_f = [1, (1 + n) / 2, n]
+    before = _heads_in_view(sc, cam, rigs, check_f) if rigs else []
+    keep = [j for j, (x, y, z) in enumerate(before[0])] if before else []
+    keep = [j for j in keep if all(0.0 <= row[j][0] <= 1.0 and 0.0 <= row[j][1] <= 1.0 and row[j][2] > 0 for row in before)]
+    # the nearest character sets how far the camera may slide (a near subject shifts most)
+    near = min([((r.matrix_world @ r.pose.bones["head"].head) - p0).length for r in rigs] + [d])
     fwd = (t0 - p0).normalized()
     lat = fwd.cross(Vector((0, 0, 1)))
     if lat.length < 1e-3:
         lat = Vector((1, 0, 0))
     lat.normalize()
     side = 1 if af.stable_seed(sid, "side") % 2 else -1
-    D = (fwd * min(cfg.get("dolly", 0.12) * d, 1.5) + lat * (min(cfg.get("truck", 0.08) * d, 1.0) * side)
-         + Vector((0, 0, min(cfg.get("crane", 0.03) * d, 0.5))))          # wides: parallax without losing the composition
-    sc = bpy.context.scene
+    D = (fwd * min(cfg.get("dolly", 0.12) * d, 1.5, 0.22 * near) + lat * (min(cfg.get("truck", 0.08) * d, 1.0, 0.12 * near) * side)
+         + Vector((0, 0, min(cfg.get("crane", 0.03) * d, 0.5, 0.06 * near))))
     dg = bpy.context.evaluated_depsgraph_get()
     s_ = lambda f: (lambda t: t * t * (3 - 2 * t))((f - 1) / (n - 1))
     frames = [1 + (n - 1) * k / 10 for k in range(11)]
+    orig = {i: [(kp.co.x, kp.co.y, kp.handle_left.y, kp.handle_right.y) for kp in fcs[i].keyframe_points] for i in range(3)}
+    had_end = {i: any(abs(kp.co.x - n) < 0.5 for kp in fcs[i].keyframe_points) for i in range(3)}
+
+    def put_move(Dm):
+        for i in range(3):
+            fc = fcs[i]
+            while len(fc.keyframe_points):                       # restore the staged keys first
+                fc.keyframe_points.remove(fc.keyframe_points[0], fast=True)
+            for (x, y, hl, hr) in orig[i]:
+                kp = fc.keyframe_points.insert(x, y)
+            fc.update()
+            if not had_end[i]:
+                fc.keyframe_points.insert(n, fc.evaluate(n))
+            for kp in fc.keyframe_points:
+                w = s_(min(max(kp.co.x, 1), n))
+                kp.co.y += Dm[i] * w
+            for kp in fc.keyframe_points:
+                kp.interpolation = "BEZIER"
+                kp.handle_left_type = kp.handle_right_type = "AUTO_CLAMPED"
+            fc.update()
+
     scale = 1.0
+    ok = False
     for _ in range(4):
         pts = [pos(f) + D * scale * s_(f) for f in frames]
         if _path_ok(sc, dg, pts, [tpos(f) for f in frames]):
-            break
+            put_move(D * scale)
+            if not keep:
+                ok = True
+                break
+            after = _heads_in_view(sc, cam, rigs, check_f)
+            if all(0.08 <= row[j][0] <= 0.92 and 0.08 <= row[j][1] <= 0.92 and row[j][2] > 0 for row in after for j in keep):
+                ok = True
+                break
         scale *= 0.5
-    else:
-        return None
-    D = D * scale
-    for i in range(3):
-        fc = fcs[i]
-        if not any(abs(kp.co.x - n) < 0.5 for kp in fc.keyframe_points):
-            fc.keyframe_points.insert(n, fc.evaluate(n))
-        for kp in fc.keyframe_points:
-            w = s_(min(max(kp.co.x, 1), n))
-            kp.co.y += D[i] * w
-            kp.handle_left.y += D[i] * w
-            kp.handle_right.y += D[i] * w
-        fc.update()
-    return f"{D.length:.2f} m (scale {scale:g}, subject at {d:.1f} m)"
-
-
-# ---------------------------------------------------------------- V5: attention shifts (people glance away and back)
-GLANCE = {"F1L", "F1R", "F3L", "F3R", "G2L", "G3L", "G3R", "E2L", "E2R", "C2L", "C2R", "I1L", "E3L", "F4R", "G1R"}
+    if not ok:
+        put_move(Vector((0, 0, 0)))
+        sc.frame_set(1)
+        return "none (would lose the characters)"
+    sc.frame_set(1)
+    return f"{(D * scale).length:.2f} m (scale {scale:g}, subject at {d:.1f} m, nearest character {near:.1f} m)"
 
 
 def glances(rig, sid, n, seed):
