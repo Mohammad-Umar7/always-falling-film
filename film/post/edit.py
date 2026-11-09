@@ -10,6 +10,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 sys.path.insert(0, HERE)
 import timeline as TL
+V4 = os.path.exists(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "v4.flag")) or os.environ.get("AF_V4") == "1"
 
 W, H = 1920, 1080
 R = os.path.join(ROOT, "renders")
@@ -423,6 +424,73 @@ def ink_edges(img, strength=0.42, lo=0.06, hi=0.2):
     pts = cv2.dilate(pts, np.ones((7, 7), np.uint8))
     e = e * (1 - pts)
     return img * (1 - e[..., None] * strength) + e[..., None] * strength * np.array([0.03, 0.025, 0.06], np.float32)
+
+
+def line_art(img, strength=0.8):
+    """V4 'drawn' look: anime line art traced from the frame. Crisp Canny contours on value AND colour edges,
+    thicker where the edge is strong (silhouettes), thin inside (folds, features); ink-coloured, anti-aliased.
+    Texture and grain are flattened first so only real shapes get a line; stars and sparkles stay clean."""
+    u8 = (np.clip(img, 0, 1) * 255).astype(np.uint8)
+    sm = cv2.bilateralFilter(u8, 7, 38, 5)
+    lab = cv2.cvtColor(sm, cv2.COLOR_RGB2LAB)
+    Lc = lab[..., 0]
+    lo_, hi_ = np.percentile(Lc, (2, 98))
+    Ln = np.clip((Lc.astype(np.float32) - lo_) * (255.0 / max(20.0, hi_ - lo_)), 0, 255).astype(np.uint8)   # night scenes too
+    eL = cv2.Canny(Ln, 48, 110)                 # only real shapes: weak edges are the ones that would shimmer
+    chroma = cv2.addWeighted(lab[..., 1], 0.5, lab[..., 2], 0.5, 0)
+    eC = cv2.Canny(chroma, 18, 42)
+    e = np.maximum(eL, eC).astype(np.float32) / 255.0
+    Lf = Ln.astype(np.float32)
+    mag = np.sqrt(cv2.Sobel(Lf, cv2.CV_32F, 1, 0, ksize=3) ** 2 + cv2.Sobel(Lf, cv2.CV_32F, 0, 1, ksize=3) ** 2)
+    strong = (mag > 260).astype(np.float32)
+    thin = cv2.dilate(e, np.ones((2, 2), np.uint8))
+    thick = cv2.dilate(e * strong, np.ones((3, 3), np.uint8))
+    line = np.maximum(thin * 0.6, thick)
+    l8 = cv2.cvtColor(u8, cv2.COLOR_RGB2GRAY)
+    pts = np.clip((l8.astype(np.float32) - cv2.medianBlur(l8, 9).astype(np.float32)) / 22.0, 0, 1)
+    pts = cv2.dilate(pts, np.ones((7, 7), np.uint8))
+    line = cv2.GaussianBlur(line * (1 - pts), (0, 0), 0.55)[..., None]
+    return img * (1 - line * strength) + line * strength * np.array([0.035, 0.028, 0.07], np.float32)
+
+
+def painted(img, r=4):
+    """V4: wide establishing shots as an anime background painting - a Kuwahara filter (each pixel takes the mean of
+    the calmest of its four neighbouring quadrants), which turns render detail into flat brush strokes"""
+    x = np.clip(img, 0, 1.5).astype(np.float32)
+    L = lum(x)
+    k = (r + 1, r + 1)
+    best_v, out = None, None
+    for anchor in ((r, r), (0, r), (r, 0), (0, 0)):
+        m = cv2.boxFilter(x, -1, k, anchor=anchor, borderType=cv2.BORDER_REFLECT)
+        mL = cv2.boxFilter(L, -1, k, anchor=anchor, borderType=cv2.BORDER_REFLECT)
+        v = cv2.boxFilter(L * L, -1, k, anchor=anchor, borderType=cv2.BORDER_REFLECT) - mL * mL
+        if best_v is None:
+            best_v, out = v, m
+        else:
+            sel = v < best_v
+            best_v = np.where(sel, v, best_v)
+            out = np.where(sel[..., None], m, out)
+    return out
+
+
+def shooting_star(img, f, f0, x0, y0, ang, length, life=11):
+    """V4: a meteor flicks across a night sky (the world keeps moving)"""
+    t = f - f0
+    if t < 0 or t > life:
+        return img
+    a = math.radians(ang)
+    dx, dy = math.cos(a), math.sin(a)
+    p = t / life
+    hx, hy = x0 + dx * length * p, y0 + dy * length * p
+    al = min(1.0, t / 2.0) * min(1.0, (life - t) / 4.0)
+    ov = np.zeros(img.shape[:2], np.float32)
+    trail = 0.35 * length
+    for k in range(24):
+        s_ = k / 24
+        cv2.circle(ov, (int(hx - dx * trail * s_), int(hy - dy * trail * s_)), max(1, int(2.2 * (1 - s_))), al * (1 - s_) ** 1.4, -1, cv2.LINE_AA)
+    g = cv2.GaussianBlur(ov, (0, 0), 5)[..., None]
+    core = cv2.GaussianBlur(ov, (0, 0), 0.8)[..., None]
+    return img + g * np.array([0.55, 0.65, 1.0], np.float32) * 0.8 + core * np.array([1.0, 1.0, 1.0], np.float32)
 
 
 def paper(img, k=0.045):
@@ -877,6 +945,10 @@ def make_frame(f):
             x, y = dot_pos(t, x0=1100, x1=1860)
             img = draw_dot(img, x, y)
             img = glint(img, x, y, f, strength=0.7)
+    if V4:
+        for (f0_, x0_, y0_, ang_, len_) in getattr(TL, "SHOOTING_STARS", []):
+            if f0_ <= f <= f0_ + 12:
+                img = shooting_star(img, f, f0_, x0_, y0_, ang_, len_)
     for (a_, b_, seed_, n_) in getattr(TL, "FRAGMENTS", []):     # V3: the satellite's last pieces, not a living dot
         if a_ <= f <= b_:
             img = fragments(img, f, a_, b_, seed_, n_)
@@ -912,11 +984,16 @@ def make_frame(f):
     if g in ("fire",):
         img = chroma(img, 0.004)
     img = bloom(img, 0.7 if g != "space" else 0.65, 0.34 if g in ("night", "space", "fire") else 0.22)
-    if f in ex.get("impact", []):
+    if f in ex.get("impact", []) or (V4 and f in getattr(TL, "IMPACTS_V4", ())):
         img = impact(np.clip(img, 0, 1), f, red=(g == "fire" or kind == "i4"))
     if kind not in ("title", "credits", "black"):
+        if V4 and sid in getattr(TL, "PAINTED", ()):
+            img = painted(img)
         if TL.STYLE.get("ink", True):
             img = ink_edges(np.clip(img, 0, 1.5))
+        if (V4 and g != "space" and sid not in getattr(TL, "PAINTED", ())
+                and f not in getattr(TL, "IMPACTS_V4", ()) and f not in ex.get("impact", [])):
+            img = line_art(img)
         if TL.STYLE.get("boil", True):
             img = line_boil(img, f)
         img = vignette(img, 0.3)

@@ -172,3 +172,13 @@ STYLE = {"ink": True, "boil": False, "paper": True}
 # the last pieces of Aryabhata burning up over the roof as father and son stand together:
 # (start, end, seed, count) - glowing fragments with trails crossing the upper sky
 FRAGMENTS = [(6655, 6838, 92, 7)]
+
+# ---------------------------------------------------------------- V4 (only when film/v4.flag exists)
+# impact frames on every big beat: the title hit, the father leaving (the slash), the tape cutting off on "maybe-",
+# the burning satellite appearing to both, the son seeing his father in the lane
+IMPACTS_V4 = (289, 290, 1262, 1263, 4191, 4192, 5758, 5760, 6121, 6123)
+# meteors in night skies: (start frame, x, y, angle deg, length px)
+SHOOTING_STARS = [(1118, 1500, 110, 168, 330), (2992, 330, 120, 160, 210), (5285, 520, 100, 170, 230)]
+# wide establishing shots painted like anime backgrounds
+PAINTED = ("B1", "B5")
+

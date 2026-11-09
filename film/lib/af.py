@@ -3,6 +3,17 @@ import bpy, bmesh, math, random, os
 from mathutils import Vector, Euler, Matrix, Quaternion
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def v4():
+    """V4 switch: film/v4.flag, or AF_V4=1 for previews while a V3 render is still running"""
+    return os.path.exists(os.path.join(ROOT, "v4.flag")) or os.environ.get("AF_V4") == "1"
+
+
+def stable_seed(*parts):
+    """hash() is salted per process; renders and repair renders must get the same noise"""
+    import zlib
+    return zlib.crc32("|".join(str(p) for p in parts).encode("utf-8")) % 100000
 ASSETS = os.path.join(ROOT, "assets")
 
 

@@ -200,15 +200,95 @@ def environment_life(n_frames, seed):
     return n
 
 
+# ---------------------------------------------------------------- V4: real camera moves (parallax, not a drifting picture)
+# per shot: dolly (toward the subject), truck (sideways), crane (up), as fractions of the camera-subject distance;
+# "off" keeps a camera exactly as staged (carefully framed or already moving a lot)
+MOVE = {"I4W": {"off": True}, "K1W": {"off": True}, "B1": {"off": True}, "C1F": {"truck": 0.0, "dolly": 0.08},
+        "B4a": {"off": True}, "J2": {"dolly": 0.10, "truck": 0.04, "crane": 0.0}, "J3": {"dolly": 0.10, "truck": 0.05}}
+
+
+def _path_ok(sc, dg, pts, tgt_pts):
+    for p, t in zip(pts, tgt_pts):
+        for d in (Vector((1, 0, 0)), Vector((-1, 0, 0)), Vector((0, 1, 0)), Vector((0, -1, 0)), Vector((0, 0, 1)), Vector((0, 0, -1))):
+            hit, loc, *_ = sc.ray_cast(dg, p, d, distance=0.3)
+            if hit:
+                return False
+        v = t - p
+        L = v.length
+        if L > 0.6:
+            hit, loc, nrm, idx, ob, mw = sc.ray_cast(dg, p, v.normalized(), distance=L)
+            if hit and (loc - p).length < 0.35 * L and (loc - p).length < L - 1.0:
+                return False                       # something new would block the view of the subject
+    return True
+
+
+def camera_move(cam, sid, n):
+    import af
+    cfg = MOVE.get(sid, {})
+    if cam is None or cfg.get("off") or n < 24:
+        return None
+    tt = next((c for c in cam.constraints if c.type == "TRACK_TO" and c.target is not None), None)
+    ad = cam.animation_data
+    if tt is None or ad is None or ad.action is None:
+        return None                                # cam_up shots are framed by hand
+    fcs = {fc.array_index: fc for fc in af._fcurves(ad.action) if fc.data_path == "location"}
+    tfcs = {}
+    if tt.target.animation_data and tt.target.animation_data.action:
+        tfcs = {fc.array_index: fc for fc in af._fcurves(tt.target.animation_data.action) if fc.data_path == "location"}
+    if len(fcs) < 3:
+        return None
+    pos = lambda f: Vector([fcs[i].evaluate(f) for i in range(3)])
+    tpos = lambda f: Vector([tfcs[i].evaluate(f) if i in tfcs else tt.target.location[i] for i in range(3)])
+    p0, t0, p1 = pos(1), tpos(1), pos(n)
+    d = (t0 - p0).length
+    if d < 0.3 or (p1 - p0).length > 0.15 * d:
+        return None                                # already a real move
+    fwd = (t0 - p0).normalized()
+    lat = fwd.cross(Vector((0, 0, 1)))
+    if lat.length < 1e-3:
+        lat = Vector((1, 0, 0))
+    lat.normalize()
+    side = 1 if af.stable_seed(sid, "side") % 2 else -1
+    D = fwd * (cfg.get("dolly", 0.12) * d) + lat * (cfg.get("truck", 0.08) * d * side) + Vector((0, 0, cfg.get("crane", 0.03) * d))
+    sc = bpy.context.scene
+    dg = bpy.context.evaluated_depsgraph_get()
+    s_ = lambda f: (lambda t: t * t * (3 - 2 * t))((f - 1) / (n - 1))
+    frames = [1 + (n - 1) * k / 10 for k in range(11)]
+    scale = 1.0
+    for _ in range(4):
+        pts = [pos(f) + D * scale * s_(f) for f in frames]
+        if _path_ok(sc, dg, pts, [tpos(f) for f in frames]):
+            break
+        scale *= 0.5
+    else:
+        return None
+    D = D * scale
+    for i in range(3):
+        fc = fcs[i]
+        if not any(abs(kp.co.x - n) < 0.5 for kp in fc.keyframe_points):
+            fc.keyframe_points.insert(n, fc.evaluate(n))
+        for kp in fc.keyframe_points:
+            w = s_(min(max(kp.co.x, 1), n))
+            kp.co.y += D[i] * w
+            kp.handle_left.y += D[i] * w
+            kp.handle_right.y += D[i] * w
+        fc.update()
+    return f"{D.length:.2f} m (scale {scale:g}, subject at {d:.1f} m)"
+
+
 def apply(sid, n_frames):
     """call from Shot.finish() after all acting is baked"""
+    import af
     scene = bpy.context.scene
     rigs = [o for o in scene.objects if o.type == "ARMATURE" and "spine03" in o.pose.bones]
     for i, r in enumerate(rigs):
         base = r.name.split(".")[0]
-        breathe_and_idle(r, sid, base, n_frames, seed=hash((sid, base)) % 10000 + i)
-    env = environment_life(n_frames, seed=hash(sid) % 1000)
+        breathe_and_idle(r, sid, base, n_frames, seed=af.stable_seed(sid, base, i))
+    env = environment_life(n_frames, seed=af.stable_seed(sid, "env"))
     cam = scene.camera
-    camera_life(cam, sid, n_frames, seed=hash(sid) % 10000)
+    moved = camera_move(cam, sid, n_frames) if af.v4() else None
+    camera_life(cam, sid, n_frames, seed=af.stable_seed(sid, "cam"))
     depth_of_field(cam, sid, rigs)
+    if moved:
+        print("AF: camera move", sid, moved)
     print("AF: life pass", sid, [r.name for r in rigs], "env", env, "dof" if SHOT.get(sid, {}).get("dof") else "")
