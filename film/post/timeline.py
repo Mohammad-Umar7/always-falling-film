@@ -171,7 +171,7 @@ STYLE = {"ink": True, "boil": False, "paper": True}
 
 # the last pieces of Aryabhata burning up over the roof as father and son stand together:
 # (start, end, seed, count) - glowing fragments with trails crossing the upper sky
-FRAGMENTS = [(6655, 6838, 92, 7)]
+FRAGMENTS = [(6655, 6838, 92, 7), (5950, 6116, 75, 5, "high")]   # V5: pieces burning above the son in the reveal (I4W)
 
 # ---------------------------------------------------------------- V4 (only when film/v4.flag exists)
 # impact frames on every big beat: the title hit, the father leaving (the slash), the tape cutting off on "maybe-",

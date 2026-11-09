@@ -526,7 +526,7 @@ def streak(img, f, f0, f1):
     return img + g * np.array([1.6, 0.6, 0.25], np.float32) + core * np.array([1.2, 1.0, 0.8], np.float32)
 
 
-def fragments(img, f, f0, f1, seed=92, n=7):
+def fragments(img, f, f0, f1, seed=92, n=7, band=None):
     """the last pieces of Aryabhata burning up: glowing heads with fading trails crossing the upper sky"""
     if f < f0 or f > f1:
         return img
@@ -539,6 +539,8 @@ def fragments(img, f, f0, f1, seed=92, n=7):
         life = rng.uniform(38, 70)
         x0, y0 = rng.uniform(-0.1, 0.45) * w, rng.uniform(0.04, 0.28) * h
         ang = math.radians(rng.uniform(8, 24))
+        if band == "high":                                              # V5 reveal: stay in the strip of sky above the son
+            y0, ang = rng.uniform(0.03, 0.14) * h, math.radians(rng.uniform(1, 5))
         speed = rng.uniform(16, 30)
         size = rng.uniform(2.6, 5.5)
         trail = rng.uniform(150, 300)
@@ -949,9 +951,9 @@ def make_frame(f):
         for (f0_, x0_, y0_, ang_, len_) in getattr(TL, "SHOOTING_STARS", []):
             if f0_ <= f <= f0_ + 12:
                 img = shooting_star(img, f, f0_, x0_, y0_, ang_, len_)
-    for (a_, b_, seed_, n_) in getattr(TL, "FRAGMENTS", []):     # V3: the satellite's last pieces, not a living dot
-        if a_ <= f <= b_:
-            img = fragments(img, f, a_, b_, seed_, n_)
+    for fr_ in getattr(TL, "FRAGMENTS", []):     # V3: the satellite's last pieces, not a living dot
+        if fr_[0] <= f <= fr_[1]:
+            img = fragments(img, f, *fr_[:4], band=fr_[4] if len(fr_) > 4 else None)
     for (a_, b_, cx_, cy_, it_, col_) in TL.FOCUS:
         if a_ <= f <= b_:
             fade_ = 1.0 if f - a_ < (b_ - a_) * 0.6 else max(0.0, (b_ - f) / max(1.0, (b_ - a_) * 0.4))
