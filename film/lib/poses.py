@@ -5,7 +5,8 @@
 import bpy, math, os
 import af
 
-CHARS_BLEND = os.path.join(af.ASSETS, "chars.blend")
+V2 = os.path.exists(os.path.join(af.ROOT, "faces_on.flag"))
+CHARS_BLEND = os.path.join(af.ASSETS, "chars_v2.blend" if V2 else "chars.blend")
 
 FINGERS = ["finger2", "finger3", "finger4", "finger5"]
 
@@ -30,9 +31,9 @@ def merge(*ds):
     return out
 
 
-ARMS_DOWN = {"upperarm01.L": (-4, 0, -40), "upperarm01.R": (-4, 0, 40), "lowerarm01.L": (10, 0, 0), "lowerarm01.R": (10, 0, 0),
+ARMS_DOWN = {"upperarm01.L": (-7, 0, -35), "upperarm01.R": (-7, 0, 35), "lowerarm01.L": (7, 0, 0), "lowerarm01.R": (7, 0, 0),
              "upperarm02.L": (0, 0, -6), "upperarm02.R": (0, 0, 6)}
-HANDS_RELAX = merge(_fing("L", 18, 10), _fing("R", 18, 10))
+HANDS_RELAX = merge(_fing("L", 13, 6), _fing("R", 13, 6))
 FIST_L = _fing("L", 75, 35)
 FIST_R = _fing("R", 75, 35)
 POINT_L = _fing("L", 80, 40, skip=("finger2",))
@@ -72,8 +73,18 @@ def walk_poses(phase):
 
 
 # ------------------------------------------------------------------ apply / key
+_FACE = ("jaw", "special0", "oris", "levator", "risorius", "orbicularis", "temporalis", "tongue")
+
+
+def is_face_bone(n):
+    """face bones belong to lib/face.py; body poses never reset or key them"""
+    return n.startswith(_FACE) or n in ("eye.L", "eye.R")
+
+
 def reset(rig):
     for pb in rig.pose.bones:
+        if is_face_bone(pb.name):
+            continue
         pb.rotation_mode = "XYZ"
         pb.rotation_euler = (0, 0, 0)
         pb.location = (0, 0, 0)
@@ -90,6 +101,8 @@ def apply(rig, pose, frame=None, interp="CONSTANT", reset_first=True):
         pb.rotation_euler = (math.radians(x), math.radians(y), math.radians(z))
     if frame is not None:
         for pb in rig.pose.bones:
+            if is_face_bone(pb.name):
+                continue
             pb.keyframe_insert("rotation_euler", frame=frame)
         if interp:
             for fc in af.fcurves_of(rig):
@@ -135,6 +148,10 @@ def load_chars(names, palette=None):
                 o.location = (0, 0, 0)
     if palette:
         retint(palette)
+    if V2:
+        import face
+        for n, r in rigs.items():
+            face.REGISTRY[n] = face.Face(r)
     return rigs
 
 
@@ -180,7 +197,7 @@ NIGHT_CAST = {
     "CLOTH_SHIRT_SON": ("#2E8AA6", "#143E56", "#5EC0DA"),
     "CLOTH_TROUSER_SON": ("#22223E", "#0E0E1E", "#3A3A62"),
     "CLOTH_BELT": ("#140C10", "#060406", "#2A1A20"),
-    "EYE_WHITE": ("#8E96C8", "#4A4E7A", "#B6BEE8"),
+    "EYE_WHITE": ("#C4CAF0", "#7C82B4", "#E6EAFF"),
     "EYE_IRIS": ("#100A0C",),
     "EYE_LASH": ("#08060A",),
 }

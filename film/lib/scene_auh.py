@@ -8,7 +8,7 @@ SUNSET_CAST = {"SKIN": ("#A8684E", "#4E2A34", "#E8A47A", "#FFD0A0"), "HAIR": ("#
                "EYE_WHITE": ("#E0C8C0", "#8A6A78", "#F8E8E0")}
 NIGHT_CAST = {"SKIN": ("#6A4A50", "#2E1C28", "#A07070", "#FFC890"), "HAIR": ("#140C12", "#080408", "#342228", "#FFB070"),
               "CLOTH_SHIRT_WORK": ("#6A5A6A", "#2E2432", "#9A8494"), "CLOTH_TROUSER": ("#2A1E28", "#120C12", "#44323E"),
-              "EYE_WHITE": ("#8A7478", "#44323A", "#B09AA0")}
+              "EYE_WHITE": ("#CDB6B4", "#7A6068", "#EEDCD8")}
 
 
 def construction(year=1975, seed=11, time="sunset"):

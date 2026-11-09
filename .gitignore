@@ -17,3 +17,5 @@ film/assets/dl/
 film/audio/raw/
 __pycache__/
 *.pyc
+film/tests/*.log
+film/faces_on.flag

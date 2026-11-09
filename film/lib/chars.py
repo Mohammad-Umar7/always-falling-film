@@ -264,8 +264,8 @@ def trousers(body, rig, name, mat, length="full", inflate=0.018, r_top=0.098, r_
     flatten_leg_hems(ob)
     if belt_mat is not None:
         belt = garment(body, rig, name + "_belt", "helper-tights",
-                       lambda co, d: (d in LEGS or d in ("spine05", "spine04", "spine03")) and top - 0.04 < co.z < top,
-                       inflate=inflate + 0.006, smooth_iter=6, smooth_fac=0.8, material=belt_mat)
+                       lambda co, d: (d in LEGS or d in ("spine05", "spine04", "spine03")) and top - 0.048 < co.z < top + 0.014,
+                       inflate=inflate + 0.010, smooth_iter=6, smooth_fac=0.8, material=belt_mat)
         return ob, belt
     return ob
 

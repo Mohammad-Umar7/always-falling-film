@@ -105,7 +105,8 @@ def P_E1R():
     S = shot.Shot("E1R", 144, *HALF)
     A = sets_auh.Auh(time="night", seed=12, year=1976)
     A.sky()
-    A.room()
+    A.room(lamp=False)
+    af.add_point("room_lamp", (1.25, 1.05, 1.05), "#FFD49A", energy=60.0, radius=0.08)
     r = poses.load_chars(["FATHER_75_WORK"], palette=scene_auh.NIGHT_CAST)
     fa = r["FATHER_75_WORK"]
     place(fa, (0.85, 0.32, 0.0), 180)
@@ -121,7 +122,7 @@ def P_E1R():
         n_.location = p
         n_.keyframe_insert("location", frame=f)
     af.set_interp(n_, "CONSTANT")
-    S.cam("cam", keys=[(1, (1.45, 1.35, 1.12), (0.95, 0.88, 0.8), 34.0), (144, (1.42, 1.32, 1.1), (0.95, 0.88, 0.8), 36.0)])
+    S.cam("cam", keys=[(1, (1.75, 0.55, 1.22), (0.9, 0.78, 0.98), 32.0), (144, (1.72, 0.57, 1.2), (0.9, 0.8, 0.96), 34.0)])
     return S
 
 
@@ -682,7 +683,7 @@ def P_C1F():
     hand = bone_tail(fa, "lowerarm02.R")
     case.location = hand + Vector((0, 0, -0.22))
     attach(case, fa, "lowerarm02.R")
-    S.cam("cam", keys=[(1, (0.2, -6.5, sets_hyd.LANE_Z + 0.95), (8.0, -7.2, sets_hyd.LANE_Z + 1.2), 34.0), (144, (0.25, -6.5, sets_hyd.LANE_Z + 0.95), (8.0, -7.2, sets_hyd.LANE_Z + 1.25), 36.0)])
+    S.cam("cam", keys=[(1, (0.1, -7.75, sets_hyd.LANE_Z + 0.95), (8.0, -6.8, sets_hyd.LANE_Z + 1.2), 34.0), (144, (0.15, -7.75, sets_hyd.LANE_Z + 0.95), (8.0, -6.8, sets_hyd.LANE_Z + 1.25), 36.0)])
     return S
 
 

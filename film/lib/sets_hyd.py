@@ -16,7 +16,7 @@ PALETTES = {
                ("#3E8A78", "#1A3E3A", "#76C8B0"), ("#5E5EAE", "#282C58", "#9A9AE6")],
         concrete=("#4E5690", "#22264C", "#8890D0"), wood=("#4A3450", "#201628", "#76567E"),
         rope=("#6E6290", "#302A4C", "#A496C8"), cloth=[("#E05A7A", "#6A2448", "#FF9AB0"), ("#F2C04A", "#7A5A30", "#FFE48A"), ("#4AC0D8", "#1E5A78", "#9AE8FF")],
-        leaf=("#1E5A56", "#0C2428", "#3E9A84"), trunk=("#2A2A48", "#10101E", "#46467A"),
+        leaf=("#2A7C6C", "#1A4652", "#52B898"), trunk=("#2A2A48", "#10101E", "#46467A"),
         far1="#3A3E86", far2="#2C2E6E", far3="#1E2054", farwin="#FFC46A", win="#FFB858", win_e=3.2,
         clay=("#A05A50", "#4A2434", "#D88A6E"), flower=("#E0408E", "#6E1A4C", "#FF7AC0"),
         outline="#0A0A22", wire="#08081A", lamp="#FFC27A"),
@@ -28,7 +28,7 @@ PALETTES = {
                ("#C4A38E", "#5E4460", "#F0D0AC"), ("#B8867A", "#5A3A58", "#E8B694")],
         concrete=("#A07C80", "#523A5A", "#D8AE9A"), wood=("#5A3A40", "#2A1A24", "#8A5E58"),
         rope=("#9A7A70", "#4A3448", "#CCA690"), cloth=[("#6A8AC8", "#3A4478", "#9CB8E8"), ("#C85A6A", "#682A48", "#F08A8A"), ("#F0E6D8", "#9A8098", "#FFFFFF")],
-        leaf=("#3A4A3A", "#1C2230", "#6A7A50"), trunk=("#3A2A2A", "#1A1218", "#5E4440"),
+        leaf=("#5C6E44", "#3A3A4C", "#8EA05A"), trunk=("#3A2A2A", "#1A1218", "#5E4440"),
         far1="#8A5A78", far2="#6A4468", far3="#4E3458", farwin="#FFD08A", win="#FFC27A", win_e=1.5,
         clay=("#B0705A", "#5A3448", "#E09A78"), flower=("#D0408A", "#701E50", "#FF70B0"),
         outline="#1A0E1E", wire="#1A0E1E", lamp="#FFD9A0"),
@@ -403,6 +403,7 @@ class Hyd:
         for i, (x, y) in enumerate(spots[:n]):
             tr, tk = af.tree_blob(f"neem{i}", (x, y, LANE_Z), radius=rnd.uniform(3.0, 5.0), blobs=10, seed=i + 20,
                                   mat=self.m_leaf, trunk_mat=self.m_trunk, trunk_h=rnd.uniform(5.0, 8.0))
+            tr.visible_shadow = False
             self.ol(tr, 0.04)
         palms = [(18, 8), (-30, 22), (8, -22), (-17, 50)]
         for i, (x, y) in enumerate(palms):

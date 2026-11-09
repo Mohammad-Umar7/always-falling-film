@@ -1,0 +1,42 @@
+mix 300.00s  overall -19.9 dBFS rms  peak -1.0 dBFS  min limiter gain -3.9 dB
+A1       1-   96  rms  -36.8  L  -37.1 R  -36.5  peak  -15.2  limiter   0.0
+A2      97-  288  rms  -24.8  L  -25.6 R  -24.0  peak   -7.6  limiter   0.0
+A3     289-  360  rms  -19.8  L  -20.3 R  -19.4  peak   -1.9  limiter   0.0
+B1     361-  504  rms  -25.0  L  -25.9 R  -24.3  peak   -5.4  limiter   0.0
+B2     505-  696  rms  -18.4  L  -18.5 R  -18.4  peak   -1.0  limiter  -1.1  voice  -18.4
+B3     697-  888  rms  -16.9  L  -16.9 R  -16.8  peak   -1.0  limiter  -0.9  voice  -16.8
+B4a    889-  984  rms  -16.9  L  -16.9 R  -16.9  peak   -1.0  limiter  -1.7  voice  -16.4
+B4b    985- 1080  rms  -17.3  L  -17.4 R  -17.3  peak   -1.0  limiter  -0.8  voice  -17.3
+B5    1081- 1200  rms  -17.2  L  -17.2 R  -17.1  peak   -1.0  limiter  -0.6  voice  -17.2
+C1    1201- 1344  rms  -17.9  L  -17.9 R  -17.8  peak   -1.0  limiter  -0.2  voice  -18.5
+C2    1345- 1440  rms  -20.6  L  -23.7 R  -18.8  peak   -5.7  limiter   0.0
+C3a   1441- 1488  rms  -12.3  L  -12.6 R  -11.9  peak   -1.0  limiter  -3.9
+C3b   1489- 1584  rms  -13.4  L  -13.4 R  -13.4  peak   -1.1  limiter   0.0
+C3c   1585- 1656  rms  -13.0  L  -13.1 R  -13.0  peak   -1.0  limiter  -1.8
+C3d   1657- 1728  rms  -15.4  L  -15.4 R  -15.4  peak   -1.0  limiter  -1.4
+C4    1729- 1920  rms  -20.9  L  -21.0 R  -20.9  peak   -6.0  limiter   0.0  voice  -21.1
+D1    1921- 2160  rms  -18.3  L  -18.0 R  -18.6  peak   -1.0  limiter  -0.9  voice  -20.7
+D2    2161- 2400  rms  -42.0  L  -42.1 R  -41.9  peak  -20.3  limiter   0.0
+E1    2401- 2544  rms  -28.3  L  -30.0 R  -27.1  peak  -12.2  limiter   0.0
+E2    2545- 2688  rms  -26.9  L  -28.6 R  -25.6  peak   -9.2  limiter   0.0
+E3    2689- 2880  rms  -24.4  L  -24.6 R  -24.1  peak   -9.5  limiter   0.0
+F1    2881- 3120  rms  -26.5  L  -29.1 R  -24.9  peak  -10.3  limiter   0.0
+F2    3121- 3360  rms  -20.1  L  -20.1 R  -20.2  peak   -2.2  limiter   0.0  voice  -20.4
+F3    3361- 3600  rms  -28.2  L  -29.1 R  -27.4  peak  -14.7  limiter   0.0
+F4    3601- 3840  rms  -25.4  L  -25.3 R  -25.5  peak  -10.5  limiter   0.0
+F5    3841- 4080  rms  -23.6  L  -23.6 R  -23.6  peak   -2.8  limiter   0.0  voice  -24.4
+G1    4081- 4272  rms  -23.3  L  -23.5 R  -23.2  peak   -1.0  limiter  -1.5  voice  -23.8
+G2    4273- 4416  rms  -28.1  L  -27.0 R  -29.6  peak   -7.8  limiter   0.0
+G3    4417- 4560  rms  -25.4  L  -26.2 R  -24.8  peak   -6.3  limiter   0.0
+H1    4561- 5160  rms  -17.3  L  -18.2 R  -16.6  peak   -1.8  limiter   0.0
+I1    5161- 5352  rms  -31.2  L  -32.9 R  -30.0  peak  -15.0  limiter   0.0
+I2a   5353- 5472  rms  -22.0  L  -21.7 R  -22.3  peak   -5.5  limiter   0.0
+I2b   5473- 5592  rms  -13.0  L  -12.8 R  -13.3  peak   -1.0  limiter  -3.3
+I2c   5593- 5712  rms  -16.9  L  -16.6 R  -17.3  peak   -1.0  limiter  -0.7
+I3    5713- 5880  rms  -19.3  L  -19.9 R  -18.8  peak   -2.2  limiter  -3.0
+I4    5881- 6120  rms  -20.0  L  -19.5 R  -20.6  peak   -1.0  limiter  -3.0
+J1    6121- 6312  rms  -46.0  L  -46.0 R  -46.0  peak  -29.1  limiter   0.0
+J2    6313- 6480  rms  -27.7  L  -27.7 R  -27.8  peak   -1.0  limiter  -0.6  voice  -27.4
+J3    6481- 6600  rms  -23.2  L  -23.9 R  -22.6  peak   -1.1  limiter   0.0
+K1    6601- 6840  rms  -21.9  L  -23.3 R  -20.8  peak   -6.4  limiter   0.0
+L1    6841- 7200  rms  -21.2  L  -22.2 R  -20.3  peak   -5.6  limiter   0.0

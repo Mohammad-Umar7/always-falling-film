@@ -94,6 +94,10 @@ class Shot:
                 m.blend_in = m.blend_out = 2
 
     def finish(self, step=1, bloom=(0.8, 0.8, 0.6), streaks=None, dispersion=0.0, kuwahara=0, save_blend=True):
+        import face, acting
+        if face.REGISTRY:
+            acting.apply(self.sid)
+            face.bake_all(1, self.n)
         af.compositor(bloom=bloom, streaks=streaks, dispersion=dispersion, kuwahara=kuwahara)
         out_dir = os.path.join(RENDERS, self.sid)
         os.makedirs(out_dir, exist_ok=True)

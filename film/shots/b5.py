@@ -10,6 +10,6 @@ H, rigs = scene_b.night_roof(moon_dir=(-0.25, 0.95, 0.2), moon_size=40.0)
 fa, boy = rigs["FATHER_75_HOME"], rigs["BOY_75"]
 poses.apply(fa, poses.merge(poses.LIE, {"head": (-8, 10, 0)}), frame=1)
 poses.apply(boy, poses.merge(poses.LIE, {"head": (-8, -14, 0)}), frame=1)
-S.cam("cam", keys=[(1, (6.0, -18.0, 12.5), (-3.0, 22.0, 4.5), 28.0),
-                   (120, (7.0, -21.0, 16.0), (-4.0, 26.0, 7.0), 28.0)])
+S.cam("cam", keys=[(1, (6.0, -16.0, 7.0), (-0.4, 2.94, 4.2), 24.0),
+                   (120, (6.7, -18.0, 7.8), (-0.3, 2.9, 4.6), 24.0)])
 S.finish(step=1)
