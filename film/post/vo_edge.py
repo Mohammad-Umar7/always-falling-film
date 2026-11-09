@@ -18,7 +18,8 @@ FFMPEG = shutil.which("ffmpeg") or r"C:\ffmpeg\bin\ffmpeg.exe"
 VOICE = {"father": ("hi-IN-MadhurNeural", "-3Hz"),
          "father_old": ("hi-IN-MadhurNeural", "-7Hz"),      # 1980-81 tapes: the same man, more tired
          "son": ("ur-IN-SalmanNeural", "+0Hz"),
-         "radio": ("en-IN-PrabhatNeural", "+0Hz")}
+         "radio": ("en-IN-PrabhatNeural", "+0Hz"),
+         "news": ("hi-IN-SwaraNeural", "+0Hz")}            # 1992: an All India Radio newsreader from a window
 
 # clip -> (voice, [(start_s, end_limit_s, text, rate%)], cut)   times are relative to the clip start (AUDIO_VO)
 # cut = (word, seconds_into_word, clip_cut_s): the clip is hard-cut that far into that word (radio dies / tape stops)
@@ -45,6 +46,15 @@ LINES = {
                           (2.95, 4.45, "अगले साल,", -20),
                           (4.84, 6.00, "शायद अगले साल।", -20)], ("शायद", 0.20, 5.04)),
     "J2": ("son", [(0.12, 1.30, "ابّا۔", -30)], None),
+    # ---- the ending, said out loud (V3)
+    "N1": ("news", [(0.10, 3.50, "आकाशवाणी। भारत का पहला उपग्रह, आर्यभट्ट,", -4),
+                    (3.75, 7.70, "सत्रह साल बाद, आज रात धरती पर लौट रहा है।", -4)], None),
+    "J3": ("father_old", [(0.10, 0.75, "बेटा...", -18),
+                          (0.95, 1.80, "मैं आ गया।", -14)], None),
+    "K1a": ("father_old", [(0.10, 1.10, "हर रात...", -16),
+                           (1.40, 3.20, "मैं ऊपर देखता था।", -10)], None),
+    "K1b": ("son", [(0.10, 0.90, "میں بھی...", -18),
+                    (1.05, 1.90, "ابّا۔", -22)], None),
 }
 
 

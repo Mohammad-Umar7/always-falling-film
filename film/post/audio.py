@@ -576,6 +576,11 @@ def vo_fx(x, kind):
         x = bandpass(x, 420, 3200, 3)
         x = np.tanh(x * 5) * 0.45
         return (x + bandpass(ns(len(x)), 900, 4500) * 0.035).astype(np.float32)
+    if kind == "radio_far":        # 1992: All India Radio from a transistor in a window across the lane
+        x = bandpass(x, 380, 3400, 3)
+        x = np.tanh(x * 3) * 0.5
+        x = x + bandpass(ns(len(x), "pink"), 1200, 5000) * 0.01
+        return reverb(x.astype(np.float32), 0.9, 0.28, 7, damp=4200)
     if kind in ("tape", "tape_far"):
         t = np.arange(len(x)) / SR
         wob = 1 + 0.004 * np.sin(2 * np.pi * 0.7 * t) + 0.0012 * np.sin(2 * np.pi * 5.3 * t)
@@ -589,8 +594,8 @@ def vo_fx(x, kind):
     return reverb(x, 0.6, 0.10, 2, damp=6000)     # dry: close, intimate
 
 
-VO_GAIN = {"outdoor": 1.0, "radio": 0.8, "tape": 0.9, "tape_far": 0.72, "dry": 0.85}
-VO_PAN = {"tape": -0.15, "tape_far": -0.25}
+VO_GAIN = {"outdoor": 1.0, "radio": 0.8, "tape": 0.9, "tape_far": 0.72, "dry": 0.85, "radio_far": 0.62}
+VO_PAN = {"tape": -0.15, "tape_far": -0.25, "radio_far": -0.45}
 
 
 def voices():

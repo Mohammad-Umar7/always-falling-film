@@ -458,6 +458,40 @@ def streak(img, f, f0, f1):
     return img + g * np.array([1.6, 0.6, 0.25], np.float32) + core * np.array([1.2, 1.0, 0.8], np.float32)
 
 
+def fragments(img, f, f0, f1, seed=92, n=7):
+    """the last pieces of Aryabhata burning up: glowing heads with fading trails crossing the upper sky"""
+    if f < f0 or f > f1:
+        return img
+    h, w = img.shape[:2]
+    rng = random.Random(seed)
+    ov = np.zeros((h, w), np.float32)
+    drawn = False
+    for i in range(n):
+        st = f0 + rng.uniform(0, 0.72) * (f1 - f0)
+        life = rng.uniform(38, 70)
+        x0, y0 = rng.uniform(-0.1, 0.45) * w, rng.uniform(0.04, 0.28) * h
+        ang = math.radians(rng.uniform(8, 24))
+        speed = rng.uniform(16, 30)
+        size = rng.uniform(2.6, 5.5)
+        trail = rng.uniform(150, 300)
+        t = f - st
+        if t < 0 or t > life:
+            continue
+        a = min(1.0, t / 6.0) * min(1.0, (life - t) / 12.0)           # flare in, burn out
+        a *= 0.75 + 0.25 * math.sin(f * 1.7 + i * 2.1)               # flicker
+        hx, hy = x0 + math.cos(ang) * speed * t, y0 + math.sin(ang) * speed * t
+        for k in range(28):
+            s_ = k / 28
+            x, y = hx - math.cos(ang) * trail * s_, hy - math.sin(ang) * trail * s_
+            cv2.circle(ov, (int(x), int(y)), max(1, int(round(size * (1 - s_ * 0.8)))), a * (1 - s_) ** 1.6, -1, cv2.LINE_AA)
+        drawn = True
+    if not drawn:
+        return img
+    g = cv2.GaussianBlur(ov, (0, 0), 9)[..., None]
+    core = cv2.GaussianBlur(ov, (0, 0), 1.2)[..., None]
+    return img + g * np.array([1.5, 0.62, 0.22], np.float32) + core * np.array([1.25, 1.05, 0.85], np.float32)
+
+
 # ------------------------------------------------------------------ divider
 def divider_w(f):
     ks = TL.DIVIDER
@@ -823,10 +857,9 @@ def make_frame(f):
             x, y = dot_pos(t, x0=1100, x1=1860)
             img = draw_dot(img, x, y)
             img = glint(img, x, y, f, strength=0.7)
-    if kind == "k1" and 6640 <= f <= 6830:
-        t = (f - 6640) / 190
-        x, y = dot_pos(t)
-        img = draw_dot(img, x, y, glow=0.8)
+    for (a_, b_, seed_, n_) in getattr(TL, "FRAGMENTS", []):     # V3: the satellite's last pieces, not a living dot
+        if a_ <= f <= b_:
+            img = fragments(img, f, a_, b_, seed_, n_)
     for (a_, b_, cx_, cy_, it_, col_) in TL.FOCUS:
         if a_ <= f <= b_:
             fade_ = 1.0 if f - a_ < (b_ - a_) * 0.6 else max(0.0, (b_ - f) / max(1.0, (b_ - a_) * 0.4))

@@ -67,7 +67,7 @@ TEXTS = [
     (3370, 3590, "1980", "tc", "stamp"),
     (4200, 4380, "MARCH 1981.  MAINFRAME SILENT.", "bl", "log"),
     (4440, 4560, "STILL IN ORBIT.", "bl", "log"),
-    (5170, 5350, "10 FEBRUARY 1992   ·   ORBIT 92,0__   ·   ALTITUDE 120 KM", "bl", "log"),
+    (5170, 5350, "10 FEBRUARY 1992", "tc", "stamp"),
 ]
 
 # subtitles (English) for the Hindi lines: (start, end, text). Matched to the audio placement in AUDIO_VO.
@@ -88,7 +88,12 @@ SUBS = [   # boundaries measured from the pauses inside each voice clip (post/au
     (3298, 3352, "You look up at night, don't you?"),
     (3902, 4020, "Beta… study hard… look after Ammi…"),
     (4074, 4190, "Beta… forgive me… next year, maybe—"),
+    (5166, 5250, "All India Radio. India's first satellite, Aryabhata…"),
+    (5254, 5350, "…is coming back to Earth tonight, after seventeen years."),
     (6362, 6440, "Abba."),
+    (6558, 6600, "Beta… I'm home."),
+    (6652, 6730, "Every night… I looked up."),
+    (6754, 6800, "So did I, Abba."),
 ]
 
 # voice placement (clip, start_frame, fx). D1 ends exactly on the 2101 impact frame; G1 is cut by the tape
@@ -102,7 +107,11 @@ AUDIO_VO = [
     ("F2", 3170, "tape"),
     ("F5", 3900, "tape_far"),
     ("G1", 4070, "tape_far"),
+    ("N1", 5164, "radio_far"),
     ("J2", 6360, "dry"),
+    ("J3", 6556, "outdoor"),
+    ("K1a", 6650, "outdoor"),
+    ("K1b", 6752, "outdoor"),
 ]
 
 # H1 orbit counter: from frame, to frame, value range; years
@@ -148,9 +157,13 @@ LABELS = [
     (1266, 1344, "HYDERABAD · THE SON", "ABU DHABI · THE FATHER"),
     (1345, 1440, "HYDERABAD · THE SON", "ABU DHABI · THE FATHER"),
     (2401, 4560, "HYDERABAD · THE SON", "ABU DHABI · THE FATHER"),
-    (5161, 5352, "HYDERABAD · THE SON, 1992", "THE FATHER"),
-    (5713, 5880, "THE SON", "THE FATHER"),
+    (5161, 5352, "HYDERABAD · THE SON, 1992", "THE FATHER · HOME AFTER 17 YEARS"),
+    (5713, 5880, "THE SON · ON THE ROOF", "THE FATHER · IN THE LANE BELOW"),
 ]
 
 # hand-drawn look switches
-STYLE = {"ink": True, "boil": True, "paper": True}
+STYLE = {"ink": True, "boil": False, "paper": True}
+
+# the last pieces of Aryabhata burning up over the roof as father and son stand together:
+# (start, end, seed, count) - glowing fragments with trails crossing the upper sky
+FRAGMENTS = [(6655, 6838, 92, 7)]

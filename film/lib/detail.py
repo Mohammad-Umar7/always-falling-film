@@ -145,7 +145,18 @@ def bevel_sets(char_obs):
     return n
 
 
+def calm_catchlights(strength=1.1):
+    """eye highlights at 1.6 bloomed into 'glowing eyes' in the night close-ups; keep them bright but not luminous"""
+    for nm in ("EYE_HL", "AF_sparkle"):
+        m = bpy.data.materials.get(nm)
+        if m and m.node_tree:
+            for nd in m.node_tree.nodes:
+                if nd.bl_idname == "ShaderNodeEmission":
+                    nd.inputs["Strength"].default_value = min(nd.inputs["Strength"].default_value, strength)
+
+
 def apply(sid):
+    calm_catchlights()
     if sid in SPACE:
         print("AF: detail pass skipped (space)", sid)
         return

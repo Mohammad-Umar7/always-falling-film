@@ -221,7 +221,7 @@ def P_E3R():
     A, fa = auh_night(1976)
     place(fa, (-1.0, -1.2, 6.6), 160)
     reach = poses.merge(poses.STAND_LOOK_UP_HIGH, poses._fing("R", 6, 4),
-                        {"upperarm01.R": (45, 0, -70), "upperarm02.R": (0, 0, 0), "lowerarm01.R": (25, 0, 0)})
+                        {"upperarm01.R": (96, 0, -44), "upperarm02.R": (0, 0, 0), "lowerarm01.R": (14, 0, 0)})
     half_up = poses.blend(poses.STAND_LOOK_UP_HIGH, reach, 0.5)
     poses.key_sequence(fa, [(1, poses.STAND_LOOK_UP_HIGH), (60, poses.STAND_LOOK_UP_HIGH), (72, half_up), (84, reach),
                             (150, reach), (166, half_up), (178, poses.STAND_LOOK_UP_HIGH), (192, poses.STAND_LOOK_UP_HIGH)], step=2)
@@ -387,7 +387,8 @@ def P_F4L():
     boy = r["BOY_79"]
     place(boy, (0.3, -3.8, 0.06), 0)
     base = poses.merge(poses.STAND_LOOK_UP, poses.FIST_R)
-    point = poses.merge(base, poses.POINT_L, {"upperarm01.L": (60, 0, 55), "lowerarm01.L": (10, 0, 0), "head": (-30, 0, 0)})
+    point = poses.merge(base, poses.POINT_L, {"upperarm01.L": (18, 0, 112), "upperarm02.L": (0, 0, 0), "lowerarm01.L": (6, 0, 0),
+                                              "head": (-30, 0, 0)})
     poses.key_sequence(boy, [(1, base), (56, base), (66, point), (150, point), (162, base), (240, base)], step=2)
     # a real umbrella: 8 scalloped panels on a shallow cone, ribs, a tip and a curved handle
     import bmesh
@@ -587,8 +588,8 @@ def P_I1R():
     hand = bone_tail(fa, "lowerarm02.R")
     case = af.box("suitcase", (0.5, 0.16, 0.38), hand + Vector((0, 0, -0.22)), case_m, bevel=0.02)
     af.add_outline(case, 0.006, "#0A0608")
-    S.cam("cam", keys=[(1, (1.85, -5.7, sets_hyd.LANE_Z + 1.35), (1.45, -7.6, sets_hyd.LANE_Z + 1.2), 38.0),
-                       (192, (1.84, -5.72, sets_hyd.LANE_Z + 1.35), (1.45, -7.6, sets_hyd.LANE_Z + 1.22), 40.0)])
+    S.cam("cam", keys=[(1, (3.55, -6.0, sets_hyd.LANE_Z + 1.05), (1.4, -6.15, sets_hyd.LANE_Z + 1.25), 24.0),
+                       (192, (3.45, -6.02, sets_hyd.LANE_Z + 1.05), (1.4, -6.15, sets_hyd.LANE_Z + 1.3), 26.0)])
     return S
 
 
@@ -659,7 +660,11 @@ def P_I4W():
     li.data.energy = 120.0
     li.data.keyframe_insert("energy", frame=200)
     # the sky's point of view (rhymes with B4a): straight down, the lane between them collapses to a hand's width
-    S.cam_up("cam", [(1, (1.4, -5.9, 26.0), (1.4, -5.9, -6.4), 120.0), (240, (1.4, -5.9, 30.0), (1.4, -5.9, -6.4), 105.0)], up=(0, 1, 0))
+    # from the lane, just behind the father's shoulder: he looks up at his son leaning over the parapet above
+    # (found by ray casting, tests/cam_search.py: both faces unoccluded, 22 degrees apart)
+    # screen-up runs from the father to the son, so the frame stands upright: son at the top, father at the bottom
+    S.cam_up("cam", [(1, (2.0, -7.25, sets_hyd.LANE_Z + 0.54), (0.73, -5.675, -1.285), 34.0),
+                     (240, (1.98, -7.22, sets_hyd.LANE_Z + 0.58), (0.73, -5.675, -1.285), 37.0)], up=(-0.2, 1.3, 6.38))
     return S
 
 
@@ -732,11 +737,11 @@ def P_J3():
             j = af.box("door_" + nm, size, loc, fm)
             af.add_outline(j, 0.008, "#0A0608")
     # the lit room behind the door (the house is a solid block): a warm glowing doorway + a light just in front of it
-    glow_m = af.flat_mat("door_glow", "#FFC890", strength=1.6)
+    glow_m = af.flat_mat("door_glow", "#E89A58", strength=0.85)
     af.plane("door_glow", 1.3, 2.25, (1.4, -5.555, sets_hyd.LANE_Z + 1.12), (math.radians(90), 0, 0), glow_m)
     warm = af.add_point("door_warm", (1.62, -5.575, sets_hyd.LANE_Z + 1.7), "#FFB46A", energy=0.0, radius=0.0)
     warm.data.keyframe_insert("energy", frame=72)
-    warm.data.energy = 320.0
+    warm.data.energy = 190.0
     warm.data.keyframe_insert("energy", frame=104)
     # over his right shoulder, onto the door: it swings open and the warm light falls on him
     S.cam("cam", keys=[(1, (2.75, -7.45, sets_hyd.LANE_Z + 1.5), (1.35, -5.7, sets_hyd.LANE_Z + 1.3), 32.0),
