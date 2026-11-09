@@ -15,7 +15,8 @@ N = 10 * (len(presets) + 1)
 sc = af.setup_scene(w=420, h=420, samples=16, f0=1, f1=N)
 rigs = poses.load_chars([name], palette=getattr(poses, pal))
 rig = rigs[name]
-F = face.Face(rig, auto_blink=False)
+F = face.REGISTRY.get(name) or face.Face(rig, auto_blink=False)
+F.auto_blink = False
 for k, pr in enumerate(presets):
     f = 10 * (k + 1)
     if pr == "open_talk":

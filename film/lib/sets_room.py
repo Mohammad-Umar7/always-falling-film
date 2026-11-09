@@ -10,7 +10,7 @@ NOTE_TEX = os.path.join(af.ASSETS, "tex", "note_2rs.png")
 PAL = {
     "night": dict(wall=("#5A6A96", "#262E50", "#8C9CC8"), floor=("#4A4E6A", "#20223A", "#72769A"), wood=("#4A3A4E", "#201824", "#6E5A70"),
                   cloth=("#7A8AC0", "#36406E", "#B0BEE6"), sky=[(-1, "#0B1C2E"), (0.0, "#2E587A"), (0.3, "#14335E"), (1, "#060B26")],
-                  amb="#2A3A66", key=("#9FC0FF", 1.6), lamp=("#FFC27A", 40.0)),
+                  amb="#2A3A66", key=("#9FC0FF", 1.6), lamp=("#FFC27A", 14.0)),
     "morning": dict(wall=("#E8D8B0", "#8A7E98", "#FFF2D0"), floor=("#B89A80", "#6A5468", "#E0C4A8"), wood=("#7A5038", "#3E2830", "#A8724E"),
                     cloth=("#9AB0E0", "#56608E", "#CCD8F6"), sky=[(-1, "#9AB8D8"), (0.0, "#F2E8D2"), (0.3, "#A8CCF0"), (1, "#5A90D8")],
                     amb="#C0B0A8", key=("#FFF0D8", 3.0), lamp=("#FFC27A", 0.0)),
@@ -122,8 +122,9 @@ class Room:
             pin = uv_sphere("br_pin", 0.008, (-1.6 + 0.012, 0.35, 1.6), flat_mat("br_pinred", "#C83030"), 8, 4)
         # ceiling bulb (off at night, the moon lights the room) and a warm lamp on the table
         if self.P["lamp"][1] > 0:
-            lm = flat_mat("br_lampbulb", "#FFE2A8", strength=6.0)
+            lm = flat_mat("br_lampbulb", "#FFE2A8", strength=0.85)
             parts.append(uv_sphere("br_lamp", 0.04, (0.95, 1.2, 1.0), lm, 12, 6))
+            parts[-1].visible_shadow = False         # its own shadow made a dark disc + ring on the wall
             af.add_point("br_lamplight", (0.95, 1.15, 1.0), self.P["lamp"][0], energy=self.P["lamp"][1], radius=0.06)
         for p in parts:
             if p.type == "MESH" and p.name.startswith(("br_bed", "br_table", "br_shelf")):
@@ -143,7 +144,22 @@ def front_door_inside(time="morning"):
              box("fd_wall", (4, 0.2, 3), (0, 0.9, 1.5), wall)]
     door = box("fd_door", (1.3, 0.08, 2.2), (0, 0.78, 1.1), wood)
     add_outline(door, 0.01, "#1A1010")
-    slot = box("fd_slot", (0.3, 0.1, 0.04), (0, 0.76, 1.0), flat_mat("fd_slot_dark", "#120A08"))
+    fy = 0.78 - 0.04                                   # the door's inner face (toward the room/camera)
+    panel = T("fd_panel", ("#6A3C26", "#301A1E", "#94583A"))
+    for cx in (-0.3, 0.3):
+        for cz in (0.42, 1.38, 1.86):
+            h = 0.52 if cz != 1.86 else 0.34
+            p = box("fd_pan", (0.46, 0.014, h), (cx, fy - 0.007, cz), panel)
+            add_outline(p, 0.005, "#1A1010")
+    iron = T("fd_iron", ("#2A2A30", "#101014", "#5A5A66"))
+    for cx in (-0.6, 0.0, 0.6):
+        for k in range(9):
+            uv_sphere("fd_stud", 0.014, (cx, fy - 0.012, 0.18 + k * 0.24), iron, 10, 6)
+    box("fd_bolt", (0.34, 0.03, 0.035), (0.42, fy - 0.02, 1.18), iron)
+    box("fd_bolt_knob", (0.04, 0.05, 0.05), (0.27, fy - 0.03, 1.18), iron)
+    brass = T("fd_brass", ("#B08A3A", "#5A4020", "#E8C870"))
+    box("fd_plate", (0.36, 0.008, 0.09), (0, fy - 0.004, 1.0), brass)
+    slot = box("fd_slot", (0.28, 0.012, 0.02), (0, fy - 0.006, 1.0), flat_mat("fd_slot_dark", "#120A08"))
     # a slice of sunlight under the door
     sun = flat_mat("fd_sunline", "#FFE6B0", strength=2.0)
     plane("fd_light", 1.2, 0.05, (0, 0.72, 0.01), mat=sun)

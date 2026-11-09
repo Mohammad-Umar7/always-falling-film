@@ -28,7 +28,7 @@ PALETTES = {
                ("#C4A38E", "#5E4460", "#F0D0AC"), ("#B8867A", "#5A3A58", "#E8B694")],
         concrete=("#A07C80", "#523A5A", "#D8AE9A"), wood=("#5A3A40", "#2A1A24", "#8A5E58"),
         rope=("#9A7A70", "#4A3448", "#CCA690"), cloth=[("#6A8AC8", "#3A4478", "#9CB8E8"), ("#C85A6A", "#682A48", "#F08A8A"), ("#F0E6D8", "#9A8098", "#FFFFFF")],
-        leaf=("#5C6E44", "#3A3A4C", "#8EA05A"), trunk=("#3A2A2A", "#1A1218", "#5E4440"),
+        leaf=("#5C7A44", "#2E4A3A", "#8EAA5A"), trunk=("#3A2A2A", "#1A1218", "#5E4440"),
         far1="#8A5A78", far2="#6A4468", far3="#4E3458", farwin="#FFD08A", win="#FFC27A", win_e=1.5,
         clay=("#B0705A", "#5A3448", "#E09A78"), flower=("#D0408A", "#701E50", "#FF70B0"),
         outline="#1A0E1E", wire="#1A0E1E", lamp="#FFD9A0"),
@@ -115,7 +115,7 @@ class Hyd:
         af.sky_world(P["sky"], ambient=P["ambient"], ambient_strength=P["amb"], stars=P["stars"],
                      milky=dict(axis=(0.35, 0.75, 0.55), width=0.22, bright=0.42, color="#C8A0F0") if self.time == "night" else None,
                      horizon_fade=(0.02, 0.22))
-        af.add_sun("key", P["key_dir"], P["key_col"], energy=P["key_e"], angle=1.0)
+        af.add_sun("key", P["key_dir"], P["key_col"], energy=P["key_e"], angle=0.2)
 
     def ol(self, ob, t=0.03):
         add_outline(ob, t, self.P["outline"])

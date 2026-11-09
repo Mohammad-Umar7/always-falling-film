@@ -51,6 +51,10 @@ def setup_scene(w=1920, h=1080, fps=24, samples=24, f0=1, f1=1, transparent=Fals
     sc.frame_start, sc.frame_end = f0, f1
     sc.eevee.taa_render_samples = samples
     sc.eevee.use_shadows = True
+    # cel look: no screen-space GI / raytraced indirect (their noise flickers across the toon ramp thresholds)
+    for attr, val in (("use_raytracing", False), ("use_fast_gi", False)):
+        if hasattr(sc.eevee, attr):
+            setattr(sc.eevee, attr, val)
     sc.view_settings.view_transform = "Standard"
     sc.view_settings.look = "None"
     sc.view_settings.exposure = 0.0
@@ -919,6 +923,37 @@ def render_anim(outdir, f0=None, f1=None, step=1):
     sc.render.use_overwrite = False
     sc.render.use_placeholder = True
     bpy.ops.render.render(animation=True)
+
+
+def soften_toon(width=0.02):
+    """Give every CONSTANT cel ramp (node TOON_RAMP) a narrow linear edge at each band boundary. Flat surfaces whose
+    lighting sits right at a threshold then read as one smooth tone instead of TAA-dithered salt-and-pepper speckle."""
+    n = 0
+    for m in bpy.data.materials:
+        if not m.node_tree:
+            continue
+        for nd in m.node_tree.nodes:
+            if nd.bl_idname != "ShaderNodeValToRGB" or nd.color_ramp.interpolation != "CONSTANT":
+                continue
+            if not (nd.name.startswith("TOON_RAMP") or nd.label.startswith("TOON_RAMP")):
+                continue
+            cr = nd.color_ramp
+            st = sorted([(e.position, tuple(e.color)) for e in cr.elements])
+            if len(st) < 2 or len(st) * 2 > 30:
+                continue
+            new = [st[0]]
+            for (p0, c0), (p1, c1) in zip(st[:-1], st[1:]):
+                new.append((max(p0, p1 - width), c0))
+                new.append((min(1.0, p1 + width), c1))
+            while len(cr.elements) > 1:
+                cr.elements.remove(cr.elements[-1])
+            cr.elements[0].position, cr.elements[0].color = new[0][0], new[0][1]
+            for pos, col in new[1:]:
+                e = cr.elements.new(pos)
+                e.color = col
+            cr.interpolation = "LINEAR"
+            n += 1
+    return n
 
 
 def save(path):

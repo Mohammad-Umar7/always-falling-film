@@ -10,7 +10,7 @@ def setup(sun_dir=(0.55, -0.6, 0.58)):
     af.sky_world([(-1.0, "#7FA4C8"), (0.0, "#DCEBFA"), (0.06, "#A9CDF2"), (0.3, "#5F9BE0"), (1.0, "#2A62C4")],
                  ambient="#9AB4D8", ambient_strength=0.8, stars=None)
     sd = Vector(sun_dir).normalized()
-    af.add_sun("sun", -sd, "#FFF4E2", energy=3.6, angle=0.8)
+    af.add_sun("sun", -sd, "#FFF4E2", energy=3.0, angle=0.8)
     ground = af.toon_mat("steppe", "#C2B47E", shadow="#7E7A86", light="#E4D8A4", band=0.3, light_band=0.8)
     af.plane("ground", 9000, 9000, (0, 0, 0), mat=ground)
     hills = af.flat_mat("hills", "#9DB4CC")
@@ -31,7 +31,7 @@ def setup(sun_dir=(0.55, -0.6, 0.58)):
 
 
 def smoke_mats():
-    white = af.toon_mat("smoke_white", "#ECEAE6", shadow="#A2A2B8", light="#FFFFFF", band=0.32, light_band=0.78)
+    white = af.toon_mat("smoke_white", "#D8D2CA", shadow="#9896AC", light="#EFEAE2", band=0.32, light_band=0.78)
     warm = af.toon_mat("smoke_warm", "#F2C49A", shadow="#B0708A", light="#FFE8C8", band=0.32, light_band=0.78)
     return white, warm
 
@@ -52,7 +52,7 @@ def plume(rocket, f_ignite, f_full, name="plume", length=16.0):
     # flicker
     for a in range(3):
         add = af.add_noise_mod(root, "scale", a, strength=0.12 if a == 2 else 0.06, scale=1.5, phase=a * 10)
-    gm = af.flat_mat(name + "_glow", "#FFF2B0", strength=18.0)
+    gm = af.flat_mat(name + "_glow", "#FFE6A0", strength=7.0)
     g = af.uv_sphere(name + "_glowball", 1.0, (0, 0, 0.5), gm, 24, 12)
     g.parent = rocket
     g.scale = (0.001, 0.001, 0.001)
@@ -96,7 +96,7 @@ def trail(name, top_z_keys, mat, radius=(1.4, 9.0)):
     return ob
 
 
-def trail_puffs(name, z0, z1, f0, f1, mat, step=5.0, r=(2.0, 7.0), seed=3):
+def trail_puffs(name, z0, z1, f0, f1, mat, step=5.0, r=(2.0, 7.0), seed=3, spread=0.6):
     """Cel smoke puffs left behind the climbing rocket: puff at height z appears when the rocket passes it."""
     rnd = random.Random(seed)
     z = z0
@@ -104,10 +104,10 @@ def trail_puffs(name, z0, z1, f0, f1, mat, step=5.0, r=(2.0, 7.0), seed=3):
     while z < z1:
         t = (z - z0) / (z1 - z0)
         f = int(f0 + t * (f1 - f0))
-        p = af.ico(f"{name}{len(out)}", 1.0, (rnd.uniform(-0.6, 0.6), rnd.uniform(-0.6, 0.6), z), mat, sub=3)
+        p = af.ico(f"{name}{len(out)}", 1.0, (rnd.uniform(-spread, spread), rnd.uniform(-spread, spread), z), mat, sub=3)
         p.scale = (0.0001, 0.0001, 0.0001)
         p.keyframe_insert("scale", frame=max(1, f - 1))
-        rr = r[0] + (r[1] - r[0]) * (1 - t) * rnd.uniform(0.7, 1.0)
+        rr = r[0] + (r[1] - r[0]) * (1 - t) * rnd.uniform(0.55, 1.05)
         p.scale = (rr * 0.6, rr * 0.6, rr * 0.8)
         p.keyframe_insert("scale", frame=f + 4)
         p.scale = (rr, rr, rr * 1.2)

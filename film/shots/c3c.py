@@ -14,7 +14,8 @@ for f, z in keys:
     rocket.location = (0, 0, z)
     rocket.keyframe_insert("location", frame=f)
 af.set_interp(rocket, "LINEAR")
-sl.trail_puffs("trail", 120.0, 612.0, -40, 72, white, step=6.0, r=(2.5, 9.0))
+sl.trail_puffs("trail", 120.0, 612.0, -40, 72, white, step=2.6, r=(2.5, 9.0), spread=2.0)          # dense, billowing plume
+sl.trail_puffs("trailb", 124.0, 612.0, -40, 72, white, step=3.4, r=(1.8, 6.5), seed=11, spread=3.2)
 cam = S.cam("cam", keys=[(1, (60.0, -80.0, 200.0), (0.0, 0.0, 262.0), 38.0), (72, (60.0, -80.0, 520.0), (0.0, 0.0, 628.0), 38.0)])
 S.shake(cam, 1, 72, strength=0.012, scale=1.4)
 # sky darkens with altitude: animate world colour strength subtly via exposure

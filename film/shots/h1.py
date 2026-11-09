@@ -7,6 +7,8 @@ from mathutils import Vector, Matrix
 import af, shot, scene_space as ss, sets_space as sp, orbits
 
 S = shot.Shot("H1", frames=600)
+sp.DAY_TEX = os.path.join(af.ASSETS, "earth_day_poster.png")
+sp.CLOUD.update(scale=6.5, cover=0.55, white="#D6DEF6")
 o = ss.setup(sun_dir=(0.9, -0.3, 0.3), latlon=(20.0, 68.0), lights=0.7)
 for led in o["leds"]:
     em = [n for n in led.data.materials[0].node_tree.nodes if n.bl_idname == "ShaderNodeEmission"][0]

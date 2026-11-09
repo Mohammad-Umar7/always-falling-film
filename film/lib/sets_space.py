@@ -7,7 +7,8 @@ from af import hexc, N, I, O, L, mixcol, math_, maprange, ramp, new_mat, finish_
 EARTH_R = 3000.0          # scaled Earth (altitude/radius ratio kept ~ real for 600 km orbit)
 ALT = 280.0
 DL = os.path.join(af.ASSETS, "dl")
-DAY_TEX = os.path.join(af.ASSETS, "earth_day_anime.png")
+DAY_TEX = os.path.join(af.ASSETS, "earth_day_poster.png")      # posterised cel map (matches the 92,000-orbit montage)
+CLOUD = {"scale": 6.5, "cover": 0.55, "white": "#D6DEF6"}
 NIGHT_TEX = os.path.join(af.ASSETS, "earth_night_clean.png")
 
 
@@ -95,13 +96,13 @@ def earth(center=(0, 0, -(EARTH_R + ALT)), rot=(0, 0, 0), sun_dir=(1, 0, 0), lig
     shaded = mixcol(nt, math_(nt, "MULTIPLY", tmask, 0.55), shaded, "#FF8A4A")
     if clouds:
         cnz = N(nt, "ShaderNodeTexNoise", noise_dimensions="3D")
-        I(cnz, "Scale").default_value = 3.2
+        I(cnz, "Scale").default_value = CLOUD["scale"]
         I(cnz, "Detail").default_value = 5.0
         I(cnz, "Roughness").default_value = 0.55
         I(cnz, "Distortion").default_value = 1.4
         L(nt, O(nrm, "Vector"), I(cnz, "Vector"))
-        cov = maprange(nt, O(cnz, "Fac"), 0.60, 0.64, 0.0, 0.9)
-        ccol = ramp(nt, [(0.0, "#0A0E20"), (0.04, "#4E5684"), (0.14, "#C8D2F4"), (0.3, "#FFFFFF")], "LINEAR", fac=lit)
+        cov = maprange(nt, O(cnz, "Fac"), 0.60, 0.64, 0.0, CLOUD["cover"])
+        ccol = ramp(nt, [(0.0, "#0A0E20"), (0.04, "#4E5684"), (0.14, "#C8D2F4"), (0.3, CLOUD["white"])], "LINEAR", fac=lit)
         shaded = mixcol(nt, cov, shaded, O(ccol, "Color"))
     ntint = maprange(nt, lit, 0.0, 0.14, 0.9, 0.0)
     shaded = mixcol(nt, ntint, shaded, "#050A1C")

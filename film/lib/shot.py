@@ -98,6 +98,7 @@ class Shot:
         if face.REGISTRY:
             acting.apply(self.sid)
             face.bake_all(1, self.n)
+        print("AF: softened toon ramps", af.soften_toon())
         af.compositor(bloom=bloom, streaks=streaks, dispersion=dispersion, kuwahara=kuwahara)
         out_dir = os.path.join(RENDERS, self.sid)
         os.makedirs(out_dir, exist_ok=True)

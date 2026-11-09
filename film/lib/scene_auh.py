@@ -4,11 +4,11 @@ from mathutils import Vector
 import af, sets_auh, poses
 
 SUNSET_CAST = {"SKIN": ("#A8684E", "#4E2A34", "#E8A47A", "#FFD0A0"), "HAIR": ("#20141A", "#0C0608", "#4A2E30", "#FFB080"),
-               "CLOTH_SHIRT_WORK": ("#C8A890", "#6A4A5E", "#F2D8BE"), "CLOTH_TROUSER": ("#3E2E3A", "#1C121A", "#5E4652"),
+               "CLOTH_SHIRT_WORK": ("#9AB2D6", "#56607E", "#D2E0F4"), "CLOTH_TROUSER": ("#3E2E3A", "#1C121A", "#5E4652"),
                "EYE_WHITE": ("#E0C8C0", "#8A6A78", "#F8E8E0")}
 NIGHT_CAST = {"SKIN": ("#6A4A50", "#2E1C28", "#A07070", "#FFC890"), "HAIR": ("#140C12", "#080408", "#342228", "#FFB070"),
-              "CLOTH_SHIRT_WORK": ("#6A5A6A", "#2E2432", "#9A8494"), "CLOTH_TROUSER": ("#2A1E28", "#120C12", "#44323E"),
-              "EYE_WHITE": ("#CDB6B4", "#7A6068", "#EEDCD8")}
+              "CLOTH_SHIRT_WORK": ("#7E92B8", "#38425E", "#B2C4E2"), "CLOTH_TROUSER": ("#2A1E28", "#120C12", "#44323E"),
+              "EYE_WHITE": ("#B8A2A2", "#6E5660", "#D8C6C2")}
 
 
 def construction(year=1975, seed=11, time="sunset"):

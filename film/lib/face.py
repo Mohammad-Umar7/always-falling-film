@@ -32,7 +32,7 @@ def _base(name):
 
 
 CONTROLS = ("blink", "squint", "wide", "lid_sad", "lid_angry", "look_x", "look_y",
-            "brow_up", "brow_down", "brow_sad", "brow_angry", "smile", "frown", "open", "tears")
+            "brow_up", "brow_down", "brow_sad", "brow_angry", "smile", "frown", "open", "tears", "sparkle")
 
 PRESETS = {
     "neutral": {},
@@ -53,6 +53,8 @@ PRESETS = {
     "teary": {"brow_sad": 1.0, "lid_sad": 0.5, "wide": 0.25, "tears": 1.0, "frown": 0.35, "open": 0.06},
     "teary_smile": {"brow_sad": 0.8, "lid_sad": 0.35, "tears": 1.0, "smile": 0.5, "squint": 0.2},
     "shame": {"brow_sad": 0.6, "blink": 0.45, "look_y": -1.0, "frown": 0.35},
+    "kira": {"wide": 0.5, "brow_up": 0.5, "open": 0.12, "smile": 0.3, "look_y": 0.3, "sparkle": 1.0},
+    "teary_kira": {"brow_sad": 0.8, "lid_sad": 0.35, "tears": 1.0, "smile": 0.5, "squint": 0.15, "sparkle": 0.8},
 }
 
 # mouth bones: control -> {bone: (x, y, z) degrees at value 1}
@@ -229,6 +231,7 @@ class Face:
             def clampz(x, z, top=top, bot=bot, H=H):
                 return max(bot(x) + 0.05 * H, min(top(x) - 0.05 * H, z))
 
+            self._sparkle(side, sc)
             for part in ("sclera", "iris", "hl", "lash", "tear"):
                 ob = self.p.get(f"eye_{part}{side}")
                 if part == "tear":
@@ -244,7 +247,7 @@ class Face:
                 elif part == "hl":
                     fns["blink"] = lambda i, p, cen=cen: (cen - p) * 0.97 + Vector((0, 0, 0))
                     fns["squint"] = lambda i, p, top=top: Vector((0, 0, max(0.0, top(p.x) - p.z) * 0.45))
-                    fns["hl_big"] = lambda i, p, cen=cen: Vector(((p.x - cen.x) * 0.75, 0, (p.z - cen.z) * 0.75))
+                    fns["hl_big"] = lambda i, p, cen=cen: Vector(((p.x - cen.x) * 0.35, 0, (p.z - cen.z) * 0.35))
                 elif part == "lash":
                     fns["blink"] = lambda i, p, cz=closed_z, top=top: Vector((0, 0, cz(p.x) + 0.6 * (p.z - top(p.x)) - p.z))
                     fns["squint"] = lambda i, p, H=H: Vector((0, 0, -0.05 * H))
@@ -275,6 +278,49 @@ class Face:
         rig.data.pose_position = old
         bpy.context.view_layer.update()
 
+    def _sparkle(self, side, sclera):
+        """kirakira: a 4-point star highlight on the iris, collapsed to a point unless 'sparkle' is keyed"""
+        iris = self.p.get(f"eye_iris{side}")
+        if iris is None:
+            return
+        _, I = self._rig_coords(iris)
+        ic = sum(I, Vector()) / len(I)
+        ir = max((p - ic).length for p in I)
+        front_y = min(p.y for p in I) - 0.0012
+        c = Vector((ic.x - 0.28 * ir * (1 if ic.x > self.x0 else -1), front_y, ic.z + 0.32 * ir))
+        L, w = 0.95 * ir, 0.16 * ir
+        star = []
+        for k in range(8):
+            a = math.pi / 2 * (k // 2) + (math.pi / 4 if k % 2 else 0.0)
+            r = L if k % 2 == 0 else w
+            star.append(Vector((c.x + math.cos(a) * r * (1.0 if k % 4 == 0 else 0.75), c.y, c.z + math.sin(a) * r)))
+        me = bpy.data.meshes.new(_base(self.rig.name) + f"_sparkle{side}")
+        me.from_pydata([c] + star, [], [(0, 1 + k, 1 + (k + 1) % 8) for k in range(8)])
+        ob = bpy.data.objects.new(_base(self.rig.name) + f"_eye_sparkle{side}", me)
+        for col in iris.users_collection:
+            col.objects.link(ob)
+        ob.parent, ob.parent_type, ob.parent_bone = iris.parent, iris.parent_type, iris.parent_bone
+        ob.matrix_parent_inverse = iris.matrix_parent_inverse.copy()
+        ob.matrix_basis = iris.matrix_basis.copy()
+        bpy.context.view_layer.update()
+        M = self.rig.matrix_world.inverted() @ ob.matrix_world
+        Minv = M.inverted()
+        for v in me.vertices:                  # vertices were given in rig space: move them into local space
+            v.co = Minv @ v.co
+        mat = bpy.data.materials.get("AF_sparkle") or af.flat_mat("AF_sparkle", "#FFFFFF", strength=1.5)
+        me.materials.append(mat)
+        ob.visible_shadow = False
+        base = [v.co.copy() for v in me.vertices]
+        cen_local = base[0]
+        ob.shape_key_add(name="Basis", from_mix=False)
+        kb = ob.shape_key_add(name="sparkle", from_mix=False)
+        for i, v in enumerate(me.shape_keys.key_blocks["Basis"].data):
+            v.co = cen_local.copy()             # collapsed: invisible
+        for i in range(len(base)):
+            kb.data[i].co = base[i]
+        kb.value = 0.0
+        self.kb["sparkle"].append(kb)
+
     def _tear(self, side, sclera):
         """wet lower-lid crescent: a copy of the sclera collapsed onto its lower edge; key 'tears' opens it."""
         if not hasattr(self, "_tear_z"):
@@ -292,7 +338,7 @@ class Face:
         if me.shape_keys:                      # the copy inherits the sclera's keys; the tear needs its own basis
             ob.shape_key_clear()
         bpy.context.view_layer.update()
-        mat = bpy.data.materials.get("AF_tear") or af.flat_mat("AF_tear", "#C2E8F8", strength=0.8, alpha=0.6, blended=True)
+        mat = bpy.data.materials.get("AF_tear") or af.flat_mat("AF_tear", "#A8D8EE", strength=0.5, alpha=0.45, blended=True)
         me.materials.clear()
         me.materials.append(mat)
         M, P = self._rig_coords(ob)
@@ -455,7 +501,7 @@ class Face:
         if len(path) < 3:
             rig.data.pose_position = old
             return
-        mat = bpy.data.materials.get("AF_teardrop") or af.flat_mat("AF_teardrop", "#E4F8FF", strength=1.1, alpha=0.85, blended=True)
+        mat = bpy.data.materials.get("AF_teardrop") or af.flat_mat("AF_teardrop", "#9CD6F0", strength=0.7, alpha=0.75, blended=True)
         bpy.ops.mesh.primitive_uv_sphere_add(segments=12, ring_count=8, radius=1.0)
         d = bpy.context.active_object
         d.name = _base(rig.name) + f"_teardrop{side}{f0}"
@@ -465,7 +511,7 @@ class Face:
             col.objects.unlink(d)
         for col in self.body.users_collection:
             col.objects.link(d)
-        r = 0.13 * H
+        r = 0.15 * H
         d.parent = rig
         d.parent_type = "BONE"
         d.parent_bone = "head"
@@ -474,7 +520,7 @@ class Face:
         d.matrix_parent_inverse = (rig.matrix_world @ pb.matrix @ Matrix.Translation(Vector((0, pb.length, 0)))).inverted()
         locs = []
         for p in path:
-            d.matrix_world = rig.matrix_world @ Matrix.Translation(p) @ Matrix.Diagonal((r, r * 0.8, r * 1.5, 1))
+            d.matrix_world = rig.matrix_world @ Matrix.Translation(p) @ Matrix.Diagonal((r * 0.85, r * 0.7, r * 2.1, 1))
             bpy.context.view_layer.update()
             locs.append(d.location.copy())
         full = d.scale.copy()
@@ -566,7 +612,7 @@ class Face:
             v["blink"] = max(v["blink"], ov.get(f, 0.0))
             v["open"] = max(v["open"], self.lips.get(f, 0.0))
             # a closing lid overrides every other eye shape (shape keys add, so scale them out)
-            for c_ in ("squint", "wide", "lid_sad", "lid_angry", "look_x", "look_y", "tears"):
+            for c_ in ("squint", "wide", "lid_sad", "lid_angry", "look_x", "look_y", "tears", "sparkle"):
                 v[c_] *= (1.0 - v["blink"])
             for c_ in ("brow_up", "brow_down", "brow_sad", "brow_angry"):
                 v[c_] = min(1.3, v[c_] * 1.25)

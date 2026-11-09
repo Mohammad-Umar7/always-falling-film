@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Always Falling: Docket</title>
+<style>
+  @page { size: A4; margin: 15mm 17mm 14mm 17mm; }
+  :root { --ink: #1b1a24; --muted: #5d5a6e; --accent: #c2410c; --cool: #2a4f9e; --rule: #d9d6e3; }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: var(--ink); background: #fff; font: 10pt/1.42 "Segoe UI", "Noto Sans", Arial, sans-serif; }
+  header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid var(--ink); padding-bottom: 6px; margin-bottom: 10px; }
+  h1 { margin: 0; font: 600 25pt/1 Georgia, "Times New Roman", serif; letter-spacing: 0.06em; }
+  .sub { color: var(--muted); font-size: 9pt; margin-top: 4px; }
+  .meta { text-align: right; font-size: 8.6pt; color: var(--muted); line-height: 1.5; }
+  .meta b { color: var(--ink); font-weight: 600; }
+  h2 { font: 600 9.5pt/1.2 "Segoe UI", Arial, sans-serif; text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent);
+       margin: 13px 0 5px; padding-bottom: 3px; border-bottom: 1px solid var(--rule); }
+  p { margin: 0 0 6px; }
+  .synopsis p { font-size: 10.3pt; }
+  ul { margin: 0 0 6px 0; padding-left: 15px; }
+  li { margin-bottom: 3px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  table { width: 100%; border-collapse: collapse; font-size: 8.8pt; }
+  td, th { text-align: left; vertical-align: top; padding: 4px 6px; border-bottom: 1px solid var(--rule); }
+  th { width: 31%; color: var(--ink); font-weight: 600; }
+  .ai { border: 1.5px solid var(--accent); border-radius: 6px; padding: 8px 10px; background: #fff8f3; }
+  .ai h2 { margin-top: 0; }
+  .note { font-size: 8.4pt; color: var(--muted); }
+  .page2 { break-before: page; }
+  .split { display: flex; height: 6px; margin: 2px 0 10px; }
+  .split span:first-child { flex: 1; background: var(--cool); }
+  .split span:nth-child(2) { width: 6px; background: #fff; }
+  .split span:last-child { flex: 1; background: var(--accent); }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>ALWAYS FALLING</h1>
+    <div class="sub">A 3D anime short about distance, a promise, and India's first satellite</div>
+  </div>
+  <div class="meta">
+    <b>Team FirstCommit</b><br>
+    Team lead: <b>[TEAM LEAD NAME]</b><br>
+    Members: [NAMES]<br>
+    DADC Short Film Festival 2026 · Theme: <b>Gravity</b><br>
+    Runtime 5:00 · 1920×1080 · 24 fps · Hindi/Urdu with English subtitles
+  </div>
+</header>
+<div class="split"><span></span><span></span><span></span></div>
+
+<section class="synopsis">
+<h2>Synopsis</h2>
+<p>Hyderabad, April 1975. The week India launches its first satellite, Aryabhata, a father leaves the Old City for the building sites of Abu Dhabi. On their last night on the rooftop he explains orbits to his five-year-old son: a satellite is always falling toward the Earth, but it moves so fast that it keeps missing. Always falling toward home, and always missing. He makes a promise: every night when it passes, they will both look up.</p>
+<p>Aryabhata's instruments fail after four days, but it keeps circling. The screen splits, Hyderabad on the left and Abu Dhabi on the right, and only the satellite's dot crosses the divide. Letters, a two-rupee note and cassette tapes cross the sea while the gap between father and son grows wider. In 1981 the satellite falls silent, and so does the last tape.</p>
+<p>February 1992. After seventeen years and 92,000 orbits, Aryabhata comes home as a fireball that burns through the divide. The grown son looks up from the rooftop, and in the lane below stands his father, suitcase in hand. "Abba."</p>
+</section>
+
+<h2>How the theme lives in the film</h2>
+<p>Gravity is the story's physics and its feeling. An orbit is a fall that never lands: the father's explanation of Newton's cannon becomes the shape of his life abroad, close enough to circle and too fast to come down. The split screen makes the invisible pull visible. The divider widens with every year, and only gravity's messenger, the satellite, crosses it until re-entry finally lets it fall.</p>
+
+<div class="two">
+<div>
+<h2>Process</h2>
+<ul>
+  <li>Fully 3D, rendered in <b>Blender 5.1 (EEVEE)</b> with a custom anime pipeline written in Python: cel shading, ink outlines, animation "on twos", impact frames, speed lines and bloom.</li>
+  <li>Characters built on <b>MPFB/MakeHuman</b> base meshes (CC0), with hand-coded garments, hair and anime eyes, plus a scripted <b>facial-expression system</b> (blinks, lip-sync to the dialogue, tears) keyed to every story beat.</li>
+  <li>Procedural sets: Hyderabad Old City with the Charminar skyline; 1970s Abu Dhabi construction sites; the Kosmos-3M launch; Earth from orbit from NASA Blue/Black Marble maps (public domain); a 92,000-orbit "cocoon"; the re-entry plasma.</li>
+  <li><b>Split-screen grammar:</b> cool Hyderabad on the left, warm Abu Dhabi on the right. The divider grows over 17 years and burns away at re-entry.</li>
+  <li><b>Sound:</b> score and effects synthesised in code (tanpura drone, a plucked "promise" motif, pads and percussion). Stereo follows the split, with Hyderabad in the left speaker and Abu Dhabi in the right. Voices are processed as a rooftop, a ground-station radio and cassette tape.</li>
+</ul>
+</div>
+<div>
+<h2>History &amp; licence</h2>
+<table>
+  <tr><th>Launch</th><td>19 April 1975, Kosmos-3M from Kapustin Yar (USSR)</td></tr>
+  <tr><th>Failure</th><td>Power failure after 4 days in orbit; experiments halted</td></tr>
+  <tr><th>Silence</th><td>Mainframe signals until March 1981</td></tr>
+  <tr><th>Re-entry</th><td>February 1992, after about 17 years in orbit</td></tr>
+  <tr><th>₹2 note</th><td>Aryabhata was pictured on India's two-rupee note; the film shows a stylised, non-replica design</td></tr>
+  <tr><th>Poetic licence</th><td>The family is fictional. The visibility of the re-entry over Hyderabad and the orbit count shown are dramatised.</td></tr>
+</table>
+<p class="note" style="margin-top:6px">Content: no smoking, alcohol or violence. The film depicts Hyderabad and the UAE with respect.</p>
+</div>
+</div>
+
+<div class="ai page2">
+<h2>AI use declaration</h2>
+<p>This film used AI tools extensively, and we declare all of it:</p>
+<ul>
+  <li><b>Concept and script:</b> developed with <b>Claude</b> (Anthropic), <b>ChatGPT</b> (OpenAI) and <b>Gemini</b> (Google) as brainstorming and critique partners. The team chose the story, setting, language and final creative direction.</li>
+  <li><b>Production code:</b> the Blender scene, character, animation, facial-expression, compositing and audio scripts were written by <b>Claude</b> (an AI coding assistant) under the team's direction. All frames were rendered locally from these 3D scenes.</li>
+  <li><b>Voices:</b> AI text-to-speech, <b>Piper</b> (offline neural TTS). Hindi voices: "rohan" (IIT Madras IndicTTS) and "pratham". The English radio voice is "alan" (en_GB).</li>
+  <li><b>Critique:</b> ChatGPT and Gemini were shown stills from the film for feedback during refinement.</li>
+  <li><b>Not used:</b> no generative image or video models created any frame. Every image is rendered 3D geometry. The Earth maps are NASA photographs, processed with conventional image filters.</li>
+</ul>
+<p class="note">Third-party assets: MPFB/MakeHuman assets (CC0); NASA Blue Marble and Black Marble imagery (public domain); fonts IBM Plex Mono, Shippori Mincho and Noto Sans (SIL Open Font License); Piper voice models used under their published licences. All music and sound effects are original, synthesised for this film.</p>
+</div>
+
+<h2>Credits</h2>
+<p>Written, directed and produced by Team FirstCommit: [NAMES / ROLES]. Made for the DADC Short Film Festival 2026, IIT Delhi Abu Dhabi.</p>
+</body>
+</html>

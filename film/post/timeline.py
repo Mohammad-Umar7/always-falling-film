@@ -18,7 +18,7 @@ SEQ = [
     ("C1", 1201, 1344, "c1", ("C1F", "C1R"), {"split_at": 1262, "grade": "day"}),
     ("C2", 1345, 1440, "split", ("C2L", "C2R"), {"grade": "night"}),
     ("C3a", 1441, 1488, "full", "C3a", {"grade": "day", "impact": [1452, 1453], "shake": (1452, 1488, 9)}),
-    ("C3b", 1489, 1584, "full", "C3b", {"grade": "day", "speed": (1489, 1584, 0.5), "shake": (1489, 1584, 4)}),
+    ("C3b", 1489, 1584, "full", "C3b", {"grade": "day", "speed": (1489, 1584, 0.5), "shake": (1489, 1584, 4), "panels": (1546, 1584)}),
     ("C3c", 1585, 1656, "full", "C3c", {"grade": "day", "speed": (1585, 1656, 0.8), "shake": (1585, 1656, 5)}),
     ("C3d", 1657, 1728, "full", "C3d", {"grade": "space"}),
     ("C4", 1729, 1920, "full", "C4", {"grade": "space"}),
@@ -69,8 +69,6 @@ TEXTS = [
     (4200, 4380, "MARCH 1981.  MAINFRAME SILENT.", "bl", "log"),
     (4440, 4560, "STILL IN ORBIT.", "bl", "log"),
     (5170, 5350, "10 FEBRUARY 1992   ·   ORBIT 92,0__   ·   ALTITUDE 120 KM", "bl", "log"),
-    (6720, 6840, "17 YEARS FALLING TOWARD HOME.", "center_hi", "end"),
-    (6770, 6840, "THIS TIME, IT DIDN'T MISS.", "center_lo", "end"),
 ]
 
 # subtitles (English) for the Hindi lines: (start, end, text). Matched to the audio placement in AUDIO_VO.
@@ -117,14 +115,21 @@ CREDITS = [
     ("line", "a film by Team FirstCommit"),
     ("gap", ""),
     ("small", "Aryabhata, India's first satellite, was launched on 19 April 1975."),
-    ("small", "Its instruments failed after four days. Its mainframe stayed alive until March 1981."),
-    ("small", "It kept circling, silently, until it fell back to Earth in February 1992."),
+    ("small", "Its instruments failed after four days; its mainframe stayed alive until March 1981."),
+    ("small", "It kept circling until it fell back to Earth on 10 February 1992."),
     ("gap", ""),
-    ("small", "The family in this film is fictional. Re-entry visibility over Hyderabad is poetic licence."),
+    ("small", "The family is fictional. The re-entry seen over Hyderabad is poetic licence."),
     ("gap", ""),
-    ("small", "Made in Blender 5.1 · characters: MPFB (CC0) · Earth maps: NASA (public domain)"),
-    ("small", "Voices: Piper TTS (IndicTTS / AI4Bharat voices) · score and sound design synthesised in code"),
-    ("small", "AI use: concept developed with Claude, ChatGPT & Gemini; scenes, animation & post scripted by Claude (Anthropic)"),
+    ("small", "Made in Blender with MPFB (CC0) and NASA imagery · voices: Piper TTS (IIT Madras IndicTTS)"),
+    ("small", "AI-assisted production: full declaration in the submission docket"),
     ("gap", ""),
     ("line", "DADC Short Film Festival 2026 · IIT Delhi Abu Dhabi"),
 ]
+
+# anime FX: manga focus lines (start, end, cx, cy, intensity, colour) and time-jump light sweeps (cut frames)
+FOCUS = [
+    (5758, 5784, 960, 470, 0.75, (0.0, 0.0, 0.0)),     # I3: the streak appears - both look up
+    (5883, 5896, 960, 540, 0.9, (1.0, 0.95, 0.85)),    # I4: the divider burns
+    (6121, 6136, 960, 520, 0.55, (0.02, 0.02, 0.08)),  # J1: the son finds his father in the lane
+]
+SWEEPS = [2401, 2545, 2689, 2881, 3121, 3361, 3601, 3841]

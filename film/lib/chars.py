@@ -270,6 +270,14 @@ def trousers(body, rig, name, mat, length="full", inflate=0.018, r_top=0.098, r_
     return ob
 
 
+def shoes(body, rig, name, mat, inflate=0.009):
+    """closed shoes: a shell around the feet up to just above the ankle (the 'body' group, foot/toe bones)"""
+    H = ref_heights(body)
+    top = H["ankle"].z + 0.018
+    return garment(body, rig, name, "body", lambda co, d: (d.startswith("foot") or d.startswith("toe")) and co.z < top,
+                   inflate=inflate, smooth_iter=4, smooth_fac=0.6, material=mat)
+
+
 def vest(body, rig, name, mat, inflate=0.022):
     """sleeveless V-neck sweater over a shirt"""
     H = ref_heights(body)

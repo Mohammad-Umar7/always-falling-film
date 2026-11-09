@@ -22,7 +22,7 @@ yaw = math.atan2(-sun_dir.x, sun_dir.y) + math.pi
 for r, p in ((fa, (-1.05, -4.98, 0.06)), (boy, (-0.38, -5.0, 0.06))):
     r.location = p
     r.rotation_euler = (0, 0, yaw)
-lean = {"upperarm01.L": (24, 0, -34), "upperarm01.R": (24, 0, 34), "lowerarm01.L": (22, 0, 0), "lowerarm01.R": (22, 0, 0), "spine03": (6, 0, 0)}
+lean = {"spine03": (4, 0, 0)}          # arms hang naturally (the old lean rested on air)
 poses.key_sequence(fa, [(1, poses.merge(poses.STAND, lean, {"head": (-6, 0, 0)})), (90, poses.merge(poses.STAND, lean, {"head": (-6, 0, 0)})),
                         (104, poses.merge(poses.STAND, lean, {"head": (-4, 22, 0)})), (144, poses.merge(poses.STAND, lean, {"head": (-4, 22, 0)}))], step=3)
 poses.key_sequence(boy, [(1, poses.merge(poses.STAND_LOOK_UP_HIGH)), (70, poses.STAND_LOOK_UP_HIGH),
@@ -31,5 +31,5 @@ pm = af.flat_mat("pigeon_dusk", "#3A2438")
 birds.flock(34, (0, 0, 0), radius=(9, 22), height=(5, 15), frames=144, period=(150, 210), mat=pm, seed=4, scale=1.3)
 S.cam("cam", keys=[(1, (22.0, 24.0, 30.0), (0.0, -1.0, 6.0), 26.0),
                    (80, (8.0, 6.0, 9.0), (-6.0, -8.0, 3.0), 28.0),
-                   (144, (3.6, 1.6, 2.3), (-12.0, -11.0, 1.2), 28.0)])
+                   (144, (2.3, 0.1, 2.5), (-12.0, -11.0, -0.2), 28.0)])
 S.finish(step=1, bloom=(0.85, 0.9, 0.7))

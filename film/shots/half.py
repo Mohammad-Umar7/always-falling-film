@@ -21,6 +21,7 @@ def place(rig, loc, yaw=0.0):
 
 
 def attach(ob, rig, bone):
+    bpy.context.view_layer.update()            # location may have just been set: refresh matrix_world first
     mw = ob.matrix_world.copy()
     ob.parent = rig
     ob.parent_type = "BONE"
@@ -36,6 +37,22 @@ def seat(rig, seat_z):
     pz = (rig.matrix_world @ rig.pose.bones["pelvis.L"].head).z
     rig.location.z += (seat_z + 0.07) - pz
     bpy.context.view_layer.update()
+
+
+def lap_points(rig):
+    bpy.context.view_layer.update()
+    pts = {}
+    for side in ("L", "R"):
+        knee = rig.matrix_world @ rig.pose.bones[f"lowerleg01.{side}"].head
+        hip = rig.matrix_world @ rig.pose.bones[f"upperleg01.{side}"].head
+        pts[side] = (knee, hip)
+    return pts
+
+
+def hands_on_knees(rig, lift=0.055, along=0.22):
+    """IK both hands onto the tops of the knees (no hands hovering over nothing)."""
+    for side, (knee, hip) in lap_points(rig).items():
+        scene_b.ik_arm(rig, side, knee.lerp(hip, along) + Vector((0, 0, lift)))
 
 
 def bone_tail(rig, bone):
@@ -87,7 +104,7 @@ def P_C2R():
     place(fa, (0.0, -2.0, 6.6), 180)
     poses.apply(fa, poses.STAND_LOOK_UP_HIGH, frame=1)
     auh_moon()
-    S.cam("cam", keys=[(1, (1.8, -4.6, 7.5), (-0.6, 12.0, 12.5), 26.0), (96, (1.75, -4.5, 7.5), (-0.6, 12.0, 12.8), 26.0)])
+    S.cam("cam", keys=[(1, (1.8, -4.6, 7.5), (-4.0, 12.0, 12.0), 26.0), (96, (1.75, -4.5, 7.5), (-4.0, 12.0, 12.3), 26.0)])
     return S
 
 
@@ -115,14 +132,14 @@ def P_E1R():
     nm = sets_room.note_mat()
     n_ = sets_room.note("e1r_note", (0.9, 0.9, 0.79), (0, 0, math.radians(8)), size=0.16, mat=nm)
     env = envelope("e1r_env", (1.12, 0.95, 0.785), (math.radians(90), 0, math.radians(-12)))
-    el = scene_b.ik_arm(fa, "L", Vector((0.98, 0.86, 0.82)))
-    er = scene_b.ik_arm(fa, "R", Vector((0.80, 0.86, 0.82)))
+    el = scene_b.ik_arm(fa, "L", Vector((0.78, 0.87, 0.815)))
+    er = scene_b.ik_arm(fa, "R", Vector((1.02, 0.9, 0.82)))
     # fold: note slides toward the envelope (stepped)
     for f, p in ((1, (0.9, 0.9, 0.79)), (40, (0.9, 0.9, 0.79)), (70, (1.0, 0.93, 0.80)), (100, (1.1, 0.95, 0.80)), (144, (1.1, 0.95, 0.80))):
         n_.location = p
         n_.keyframe_insert("location", frame=f)
     af.set_interp(n_, "CONSTANT")
-    S.cam("cam", keys=[(1, (1.75, 0.55, 1.22), (0.9, 0.78, 0.98), 32.0), (144, (1.72, 0.57, 1.2), (0.9, 0.8, 0.96), 34.0)])
+    S.cam("cam", keys=[(1, (1.45, 1.0, 1.32), (0.86, 0.6, 0.98), 30.0), (144, (1.43, 1.0, 1.3), (0.86, 0.62, 0.97), 32.0)])
     return S
 
 
@@ -168,7 +185,7 @@ def P_E2R():
     env.keyframe_insert("scale", frame=61)
     for o in (env, eh):
         af.set_interp(o, "CONSTANT")
-    S.cam("cam", keys=[(1, (-0.95, -0.75, 1.25), (0.0, -0.3, 1.05), 36.0), (144, (-0.92, -0.72, 1.23), (0.0, -0.3, 1.05), 38.0)])
+    S.cam("cam", keys=[(1, (-1.1, -0.95, 1.42), (0.08, -0.4, 1.22), 32.0), (144, (-1.08, -0.93, 1.41), (0.08, -0.4, 1.23), 33.0)])
     return S
 
 
@@ -177,11 +194,15 @@ def P_E3L():
     H, r = hyd_night(1976, ["BOY_75"], moon_dir=(0.15, -0.8, 0.58))
     boy = r["BOY_75"]
     place(boy, (0.6, -2.5, 0.06), 0)
-    poses.apply(boy, poses.merge(poses.STAND_LOOK_UP_HIGH, poses.FIST_R), frame=1)
-    hand_target = Vector((0.55, -2.85, 1.08))
-    eh = scene_b.ik_arm(boy, "R", hand_target)
+    poses.apply(boy, poses.merge(poses.STAND_LOOK_UP_HIGH, poses.FIST_L), frame=1)
+    hand_target = Vector((0.72, -2.8, 1.2))
+    eh = scene_b.ik_arm(boy, "L", hand_target)
     nm = sets_room.note_mat()
-    n_ = sets_room.note("e3l_note", hand_target + Vector((0, -0.06, 0.08)), (math.radians(78), 0, 0), size=0.17, mat=nm)
+    bpy.context.view_layer.update()
+    pb = boy.pose.bones["lowerarm02.L"]
+    wrist = boy.matrix_world @ pb.tail
+    fdir = (wrist - boy.matrix_world @ pb.head).normalized()
+    n_ = sets_room.note("e3l_note", wrist + fdir * 0.075, (math.radians(78), 0, 0), size=0.17, mat=nm)   # pinched in the fist
     S.cam("cam", keys=[(1, (0.95, -1.75, 0.55), (0.5, -3.4, 1.35), 30.0), (192, (0.94, -1.8, 0.55), (0.5, -3.4, 1.4), 31.0)])
     return S
 
@@ -200,14 +221,19 @@ def P_F1L():
     S = shot.Shot("F1L", 240, *HALF)
     H, r = hyd_night(1977, ["BOY_79"], moon_dir=(-0.5, 0.4, 0.75))
     boy = r["BOY_79"]
-    place(boy, (0.4, 0.2, 0.47), 90)
+    place(boy, (0.66, 0.2, 0.47), 90)
     sitp = poses.merge(poses.SIT, {"head": (24, 0, 0), "neck01": (10, 0, 0)})
     look = poses.merge(poses.SIT, {"head": (-20, 0, 0), "neck01": (-12, 0, 0)})
     poses.key_sequence(boy, [(1, sitp), (90, sitp), (102, look), (150, look), (162, sitp), (240, sitp)], step=3)
     bpy.context.scene.frame_set(1)
     seat(boy, 0.53)
     H.bulb("f1l_lamp", Vector((1.3, 0.9, 1.1)), energy=50.0)
-    book = af.box("f1l_book", (0.24, 0.17, 0.02), (0.68, 0.2, 0.62), af.toon_mat("book", "#C8D0F0", shadow="#5A6290", light="#FFFFFF"))
+    lp = lap_points(boy)
+    lap = (lp["L"][0] + lp["R"][0] + lp["L"][1] + lp["R"][1]) / 4 + Vector((0.04, 0, 0.075))
+    book = af.box("f1l_book", (0.17, 0.24, 0.02), lap, af.toon_mat("book", "#C8D0F0", shadow="#5A6290", light="#FFFFFF"))
+    book.rotation_euler = (0, math.radians(-18), 0)
+    for side, dy in (("L", 0.13), ("R", -0.13)):
+        scene_b.ik_arm(boy, side, lap + Vector((-0.02, dy, 0.03)))
     S.cam("cam", keys=[(1, (2.2, -1.2, 0.95), (0.4, 0.4, 1.2), 30.0), (240, (2.15, -1.1, 0.95), (0.4, 0.4, 1.25), 30.0)])
     return S
 
@@ -239,10 +265,10 @@ def P_F2L():
     poses.apply(boy, poses.merge(poses.SIT, {"head": (10, 0, -16)}), frame=1)
     seat(boy, 0.53)
     ear = bone_tail(boy, "head")
-    eh = scene_b.ik_arm(boy, "L", ear + Vector((0.12, 0.02, -0.12)))
+    eh = scene_b.ik_arm(boy, "L", ear + Vector((0.0, 0.1, -0.11)))
     A = sets_auh.Auh(time="night")
     rec, reels = A.cassette_recorder(Vector((0, 0, 0)), name="boyplayer")
-    rec.scale = (1.3, 1.3, 1.3)
+    rec.scale = (0.8, 0.8, 0.8)
     hand = bone_tail(boy, "lowerarm02.L")
     rec.location = hand + Vector((0.0, 0.0, 0.02))
     rec.rotation_euler = (math.radians(90), 0, math.radians(90))
@@ -253,7 +279,7 @@ def P_F2L():
         rl.rotation_euler = (0, 0, math.radians(-2200))
         rl.keyframe_insert("rotation_euler", frame=240)
         af.set_interp(rl, "LINEAR")
-    S.cam("cam", keys=[(1, (1.15, -0.75, 1.25), (0.42, 0.25, 1.2), 34.0), (240, (1.1, -0.7, 1.25), (0.42, 0.25, 1.22), 36.0)])
+    S.cam("cam", keys=[(1, (1.12, -0.55, 1.1), (0.42, 0.22, 0.98), 36.0), (240, (1.1, -0.53, 1.09), (0.42, 0.22, 0.99), 38.0)])
     return S
 
 
@@ -261,7 +287,8 @@ def P_F2R():
     S = shot.Shot("F2R", 240, *HALF)
     A = sets_auh.Auh(time="night", seed=12, year=1979)
     A.sky()
-    A.room()
+    A.room(lamp=False)
+    af.add_point("room_lamp", (1.25, 1.05, 1.05), "#FFD49A", energy=60.0, radius=0.08)
     rec, reels = A.cassette_recorder(Vector((0.85, 0.95, 0.78)), rot=math.radians(-10))
     for rl in reels:
         rl.rotation_euler = (0, 0, 0)
@@ -279,14 +306,19 @@ def P_F2R():
         eh.location = p
         eh.keyframe_insert("location", frame=f)
     af.set_interp(eh, "CONSTANT")
-    S.cam("cam", keys=[(1, (1.15, 0.6, 1.05), (0.85, 0.97, 0.79), 40.0), (240, (1.12, 0.62, 1.02), (0.85, 0.97, 0.79), 44.0)])
+    S.cam("cam", keys=[(1, (1.45, 1.02, 1.28), (0.84, 0.62, 0.98), 32.0), (240, (1.43, 1.02, 1.26), (0.84, 0.64, 0.97), 34.0)])
     return S
 
 
 def P_F3L():
     S = shot.Shot("F3L", 240, *HALF)
     R = sets_room.Room("night", 1979).build(shutters_open=1.0, cassettes=12)
+    lab = af.flat_mat("cas_label", "#E8DCC0", strength=0.9)
+    bpy.context.view_layer.update()                   # cassettes' world matrices must be current before parenting
     for k, c in enumerate(R.cassettes):
+        l = af.box(f"cas_lab{k}", (0.003, 0.012, 0.06), (c.location.x + 0.037, c.location.y, c.location.z + 0.01), lab)
+        l.parent = c
+        l.matrix_parent_inverse = c.matrix_world.inverted()
         f_on = 1 + k * 16 if k < 9 else 999
         c.scale = (1, 1, 1) if k < 3 else (0.001, 0.001, 0.001)
         c.keyframe_insert("scale", frame=1)
@@ -294,7 +326,27 @@ def P_F3L():
             c.scale = (1, 1, 1)
             c.keyframe_insert("scale", frame=f_on)
         af.set_interp(c, "CONSTANT")
-    S.cam("cam", keys=[(1, (-0.55, 0.05, 1.42), (-1.62, 0.25, 1.42), 30.0), (240, (-0.6, 0.08, 1.42), (-1.62, 0.25, 1.44), 33.0)])
+    # wall calendar above the shelf: the year flips while the tapes pile up
+    paper = af.flat_mat("cal_paper", "#E9E2D0", strength=0.85)
+    red = af.flat_mat("cal_red", "#B8303A", strength=0.9)
+    ink = af.flat_mat("cal_ink", "#20141A", strength=1.0)
+    af.plane("cal_sheet", 0.22, 0.28, (-1.615, -0.02, 1.66), (math.radians(90), 0, math.radians(90)), paper)
+    af.plane("cal_head", 0.22, 0.06, (-1.612, -0.02, 1.77), (math.radians(90), 0, math.radians(90)), red)
+    for i, yr in enumerate(("1977", "1978", "1979", "1980")):
+        cu = bpy.data.curves.new(f"cal_{yr}", "FONT")
+        cu.body = yr
+        cu.align_x, cu.align_y = "CENTER", "CENTER"
+        cu.size = 0.07
+        t = af.link(bpy.data.objects.new(f"cal_{yr}", cu))
+        t.data.materials.append(ink)
+        t.location = (-1.608, -0.02, 1.63)
+        t.rotation_euler = (math.radians(90), 0, math.radians(90))
+        f0, f1 = 1 + i * 60, 61 + i * 60
+        for f, sc_ in ((1, 0.0), (f0, 1.0), (f1, 0.0)):
+            t.scale = (sc_ or 0.001,) * 3
+            t.keyframe_insert("scale", frame=f)
+        af.set_interp(t, "CONSTANT")
+    S.cam("cam", keys=[(1, (-0.75, 0.08, 1.46), (-1.62, 0.12, 1.44), 44.0), (240, (-0.8, 0.1, 1.46), (-1.62, 0.13, 1.45), 48.0)])
     return S
 
 
@@ -321,12 +373,13 @@ def P_F4L():
     H, r = hyd_night(1979, ["BOY_79"], moon_dir=(0.1, -0.9, 0.42), clouds=True)
     boy = r["BOY_79"]
     place(boy, (0.3, -3.8, 0.06), 0)
-    poses.apply(boy, poses.merge(poses.STAND_LOOK_UP, {"upperarm01.R": (40, 0, 30), "lowerarm01.R": (70, 0, 0)}), frame=1)
+    poses.apply(boy, poses.merge(poses.STAND_LOOK_UP, poses.FIST_R), frame=1)
     umb_m = af.toon_mat("umbrella", "#2A2A3A", shadow="#121218", light="#4A4A62")
-    canopy = af.uv_sphere("umbrella", 0.55, (0.38, -3.75, 1.55), umb_m, 24, 12)
+    canopy = af.uv_sphere("umbrella", 0.55, (0.2, -3.84, 1.55), umb_m, 24, 12)
     canopy.scale = (1, 1, 0.35)
     af.add_outline(canopy, 0.01, "#05060E")
-    pole = af.cylinder("umbrella_pole", 0.01, 0.8, (0.38, -3.75, 1.2), umb_m, 6)
+    pole = af.cylinder("umbrella_pole", 0.012, 0.8, (0.2, -3.84, 1.2), umb_m, 6)
+    scene_b.ik_arm(boy, "R", Vector((0.2, -3.84, 1.0)))
     S.cam("cam", keys=[(1, (0.9, -1.4, 0.7), (0.2, -10.0, 4.5), 26.0), (240, (0.88, -1.45, 0.7), (0.2, -10.0, 4.7), 26.0)])
     return S
 
@@ -346,12 +399,13 @@ def P_F5L():
     R = sets_room.Room("night", 1980).build(shutters_open=1.0, cassettes=9)
     r = poses.load_chars(["BOY_81"], palette=poses.NIGHT_CAST)
     boy = r["BOY_81"]
-    place(boy, (-1.15, -0.2, 0.0), 90)
+    place(boy, (-0.93, -0.2, 0.0), 90)
     poses.apply(boy, poses.merge(poses.SIT, {"head": (20, 0, 0), "upperarm01.L": (30, 0, -20), "lowerarm01.L": (90, 0, 0),
                                              "upperarm01.R": (30, 0, 20), "lowerarm01.R": (90, 0, 0)}), frame=1)
     seat(boy, 0.52)
+    hands_on_knees(boy)
     A = sets_auh.Auh(time="night")
-    rec, reels = A.cassette_recorder(Vector((-0.75, -0.2, 0.83)), rot=math.radians(90), name="boyplayer")
+    rec, reels = A.cassette_recorder(Vector((-1.25, 0.2, 0.53)), rot=math.radians(90), name="boyplayer")
     for rl in reels:
         rl.rotation_euler = (0, 0, 0)
         rl.keyframe_insert("rotation_euler", frame=1)
@@ -374,6 +428,7 @@ def P_F5R():
     poses.apply(fa, poses.merge(poses.SIT, {"head": (28, 0, 0), "neck01": (14, 0, 0), "spine03": (12, 0, 0),
                                             "upperarm01.L": (30, 0, -26), "lowerarm01.L": (60, 0, 0), "upperarm01.R": (30, 0, 26), "lowerarm01.R": (60, 0, 0)}), frame=1)
     seat(fa, 0.69)
+    hands_on_knees(fa, lift=0.04, along=0.1)
     S.cam("cam", keys=[(1, (1.3, -1.4, 1.35), (-0.6, 0.4, 0.95), 28.0), (240, (1.25, -1.35, 1.32), (-0.6, 0.4, 0.95), 29.0)])
     return S
 
@@ -383,14 +438,14 @@ def P_G1L():
     R = sets_room.Room("night", 1981).build(shutters_open=1.0, cassettes=9)
     r = poses.load_chars(["BOY_81"], palette=poses.NIGHT_CAST)
     boy = r["BOY_81"]
-    place(boy, (-1.15, -0.2, 0.0), 90)
+    place(boy, (-0.93, -0.2, 0.0), 90)
     a = poses.merge(poses.SIT, {"head": (20, 0, 0), "upperarm01.L": (30, 0, -20), "lowerarm01.L": (90, 0, 0), "upperarm01.R": (30, 0, 20), "lowerarm01.R": (90, 0, 0)})
     b = poses.merge(a, {"head": (34, 0, 0), "neck01": (14, 0, 0), "spine03": (10, 0, 0)})
     poses.key_sequence(boy, [(1, a), (120, a), (140, b), (192, b)], step=3)
     bpy.context.scene.frame_set(1)
     seat(boy, 0.52)
     A = sets_auh.Auh(time="night")
-    rec, reels = A.cassette_recorder(Vector((-0.75, -0.2, 0.83)), rot=math.radians(90), name="boyplayer")
+    rec, reels = A.cassette_recorder(Vector((-1.25, 0.2, 0.53)), rot=math.radians(90), name="boyplayer")
     for rl in reels:
         rl.rotation_euler = (0, 0, 0)
         rl.keyframe_insert("rotation_euler", frame=1)
@@ -416,15 +471,20 @@ def P_G2L():
     R = sets_room.Room("night", 1981).build(shutters_open=1.0, cassettes=9)
     r = poses.load_chars(["BOY_81"], palette=poses.NIGHT_CAST)
     boy = r["BOY_81"]
-    place(boy, (0.0, 0.95, 0.0), 180)
+    place(boy, (0.0, 1.06, 0.0), 180)
     reach = poses.merge(poses.STAND, {"upperarm01.L": (70, 0, -20), "upperarm01.R": (70, 0, 20), "lowerarm01.L": (20, 0, 0), "lowerarm01.R": (20, 0, 0), "head": (-6, 0, 0)})
     poses.key_sequence(boy, [(1, poses.STAND), (30, poses.STAND), (44, reach), (110, reach), (124, poses.STAND), (144, poses.STAND)], step=2)
     for k, piv in enumerate(R.shutters):
         s = -1 if k == 0 else 1
-        piv.keyframe_insert("rotation_euler", frame=50)
+        piv.keyframe_insert("rotation_euler", frame=58 + k * 6)
         piv.rotation_euler = (0, 0, math.radians(s * 4))
-        piv.keyframe_insert("rotation_euler", frame=86 + k * 8)
-        af.set_interp(piv, "CONSTANT")
+        piv.keyframe_insert("rotation_euler", frame=84 + k * 6)
+    for side, x in (("L", -0.24), ("R", 0.24)):
+        scene_b.ik_arm(boy, side, Vector((x, 1.4, 1.12)))
+        con = boy.pose.bones[f"lowerarm02.{side}"].constraints[-1]
+        for f, v in ((1, 0.0), (70, 0.0), (86, 1.0), (112, 1.0), (126, 0.0)):
+            con.influence = v
+            con.keyframe_insert("influence", frame=f)
     S.cam("cam", keys=[(1, (-0.3, -1.1, 1.25), (0.0, 1.5, 1.45), 30.0), (144, (-0.28, -1.0, 1.25), (0.0, 1.5, 1.45), 31.0)])
     return S
 
@@ -472,10 +532,11 @@ def P_I1L():
     S = shot.Shot("I1L", 192, *HALF)
     H, r = roof92(["SON_92"])
     son = r["SON_92"]
-    place(son, (0.9, -5.0, 0.0), 0)
+    place(son, (0.9, -5.4, 0.0), 180)
     sitp = poses.merge(poses.SIT, {"head": (16, 0, 0), "neck01": (6, 0, 0), "upperarm01.L": (20, 0, -30), "upperarm01.R": (20, 0, 30)})
     poses.apply(son, sitp, frame=1)
-    seat(son, 1.01)
+    seat(son, 0.96)
+    hands_on_knees(son)
     # walkman headphones: a thin band + two ear cups
     hp = af.toon_mat("headphones", "#2A2A36", shadow="#101016", light="#4A4A5E")
     head = bone_tail(son, "head")
@@ -517,18 +578,20 @@ def P_I3L():
     S = shot.Shot("I3L", 168, *HALF)
     H, r = roof92(["SON_92"], moon_dir=(0.6, 0.6, 0.5))
     son = r["SON_92"]
-    place(son, (0.9, -5.0, 0.0), 0)
+    place(son, (0.9, -5.38, 0.0), 0)                # on the parapet, legs over the lane side
     down = poses.merge(poses.SIT, {"head": (16, 0, 0), "neck01": (6, 0, 0)})
     up = poses.merge(poses.SIT, {"head": (-30, 0, 0), "neck01": (-16, 0, 0), "spine02": (-6, 0, 0)})
     poses.key_sequence(son, [(1, down), (40, down), (52, up), (168, up)], step=2)
     bpy.context.scene.frame_set(1)
-    seat(son, 1.01)
+    seat(son, 0.96)
+    for side, dx in (("L", 0.26), ("R", -0.26)):      # palms on the parapet beside his hips
+        scene_b.ik_arm(son, side, Vector((0.9 + dx, -5.36, 0.99)))
     streak_sky(20, 160, (-260, -160, 240), (220, -120, 120))
     li = af.add_point("streak_light", (0.9, -6.5, 4.0), "#FF9A4A", energy=0.0, radius=1.0)
     li.data.keyframe_insert("energy", frame=30)
     li.data.energy = 900.0
     li.data.keyframe_insert("energy", frame=60)
-    S.cam("cam", keys=[(1, (1.9, -6.0, 0.9), (0.85, -4.4, 1.35), 36.0), (168, (1.85, -6.05, 0.9), (0.85, -4.4, 1.4), 38.0)])
+    S.cam("cam", keys=[(1, (1.6, -6.5, 2.3), (0.9, -5.35, 1.55), 34.0), (168, (1.58, -6.52, 2.3), (0.9, -5.35, 1.6), 37.0)])
     return S
 
 
@@ -538,14 +601,14 @@ def P_I3R():
     fa = r["FATHER_92"]
     place(fa, (1.55, -6.55, sets_hyd.LANE_Z), 180)
     down = poses.merge(poses.STAND, poses.HOLD_SUITCASE_R, {"head": (10, 0, 0)})
-    up = poses.merge(poses.STAND, poses.HOLD_SUITCASE_R, poses.LOOK_UP_HIGH)
+    up = poses.merge(poses.STAND, poses.HOLD_SUITCASE_R, poses.LOOK_UP)
     poses.key_sequence(fa, [(1, down), (30, down), (44, up), (168, up)], step=2)
     li = af.add_point("streak_light", (1.0, -7.0, sets_hyd.LANE_Z + 6.0), "#FF9A4A", energy=0.0, radius=1.0)
     li.data.keyframe_insert("energy", frame=20)
     li.data.energy = 1400.0
     li.data.keyframe_insert("energy", frame=50)
-    S.cam("cam", keys=[(1, (2.3, -5.95, sets_hyd.LANE_Z + 1.55), (1.52, -6.6, sets_hyd.LANE_Z + 1.62), 50.0),
-                       (168, (2.28, -5.97, sets_hyd.LANE_Z + 1.55), (1.52, -6.6, sets_hyd.LANE_Z + 1.66), 54.0)])
+    S.cam("cam", keys=[(1, (2.05, -5.95, sets_hyd.LANE_Z + 2.35), (1.55, -6.55, sets_hyd.LANE_Z + 1.52), 40.0),
+                       (168, (2.0, -5.98, sets_hyd.LANE_Z + 2.3), (1.55, -6.55, sets_hyd.LANE_Z + 1.56), 44.0)])
     return S
 
 
@@ -569,7 +632,8 @@ def P_I4W():
     li.data.keyframe_insert("energy", frame=1)
     li.data.energy = 120.0
     li.data.keyframe_insert("energy", frame=200)
-    S.cam("cam", keys=[(1, (1.05, -8.25, sets_hyd.LANE_Z + 0.85), (1.35, -5.3, -2.55), 16.0), (240, (0.98, -8.28, sets_hyd.LANE_Z + 0.8), (1.35, -5.3, -2.25), 16.0)])
+    # the sky's point of view (rhymes with B4a): straight down, the lane between them collapses to a hand's width
+    S.cam_up("cam", [(1, (1.4, -5.9, 26.0), (1.4, -5.9, -6.4), 120.0), (240, (1.4, -5.9, 30.0), (1.4, -5.9, -6.4), 105.0)], up=(0, 1, 0))
     return S
 
 
@@ -582,7 +646,7 @@ def P_J1():
     mid = poses.merge(poses.STAND, poses.HOLD_SUITCASE_R, poses.LOOK_UP)
     poses.key_sequence(fa, [(1, up), (60, up), (90, mid), (192, mid)], step=3)
     suitcase_at(bone_tail(fa, "lowerarm02.R"))
-    S.cam("cam", keys=[(1, (1.35, -5.65, 1.55), (1.5, -6.65, sets_hyd.LANE_Z + 1.2), 52.0), (192, (1.35, -5.68, 1.5), (1.5, -6.65, sets_hyd.LANE_Z + 1.3), 62.0)])
+    S.cam("cam", keys=[(1, (1.35, -5.65, 1.55), (1.5, -6.62, sets_hyd.LANE_Z + 1.4), 88.0), (192, (1.35, -5.68, 1.5), (1.5, -6.62, sets_hyd.LANE_Z + 1.45), 105.0)])
     return S
 
 
@@ -593,6 +657,7 @@ def P_J2():
     place(son, (1.3, -4.95, 0.06), 0)
     poses.apply(son, poses.merge(poses.STAND, poses.LOOK_DOWN, {"spine03": (12, 0, 0)}), frame=1)
     head = bone_tail(son, "head")
+    af.add_sun("rim_warm", (-0.55, -0.7, -0.35), "#FF9A52", energy=1.4, angle=3.0)
     S.cam("cam", keys=[(1, (1.3 + 0.15, -5.75, head.z - 0.45), (1.3, -4.95, head.z - 0.06), 50.0), (168, (1.3 + 0.14, -5.7, head.z - 0.43), (1.3, -4.95, head.z - 0.06), 56.0)])
     return S
 
@@ -601,21 +666,28 @@ def P_J3():
     S = shot.Shot("J3", 120, *FULL)
     H, r = roof92(["FATHER_92"])
     fa = r["FATHER_92"]
-    place(fa, (1.4, -6.35, sets_hyd.LANE_Z), 0 + 180 + 180)
+    place(fa, (1.4, -6.12, sets_hyd.LANE_Z), 180)
     poses.apply(fa, poses.merge(poses.STAND, {"head": (10, 0, 0)}), frame=1)
     eh = scene_b.ik_arm(fa, "L", Vector((1.28, -5.72, sets_hyd.LANE_Z + 1.25)))
+    suitcase_at(Vector((1.8, -6.15, sets_hyd.LANE_Z + 0.41)))
     # door leaves swing inward from frame 70, warm light spills out
-    for o in bpy.data.objects:
-        if o.name.startswith("hero_doorleaf"):
-            s = -1 if o.name.endswith("-1") else 1
-            o.keyframe_insert("rotation_euler", frame=70)
-            o.rotation_euler = (0, 0, math.radians(-s * 70))
-            o.keyframe_insert("rotation_euler", frame=104)
-    warm = af.add_point("door_warm", (1.4, -5.0, sets_hyd.LANE_Z + 1.4), "#FFB46A", energy=0.0, radius=0.5)
+    for o in list(bpy.data.objects):
+        if o.name == "hero_doorleaf1":            # far leaf only, hinged at its outer edge, swings into the house
+            hinge = bpy.data.objects.new("door_hinge", None)
+            af.link(hinge)
+            hinge.location = (o.location.x + 0.32, o.location.y, o.location.z)
+            bpy.context.view_layer.update()
+            mw = o.matrix_world.copy()
+            o.parent = hinge
+            o.matrix_world = mw
+            hinge.keyframe_insert("rotation_euler", frame=70)
+            hinge.rotation_euler = (0, 0, math.radians(-78))
+            hinge.keyframe_insert("rotation_euler", frame=100)
+    warm = af.add_point("door_warm", (1.6, -5.62, sets_hyd.LANE_Z + 1.5), "#FFB46A", energy=0.0, radius=0.4)
     warm.data.keyframe_insert("energy", frame=72)
-    warm.data.energy = 600.0
+    warm.data.energy = 900.0
     warm.data.keyframe_insert("energy", frame=104)
-    S.cam("cam", keys=[(1, (-0.4, -6.6, sets_hyd.LANE_Z + 1.5), (1.4, -5.75, sets_hyd.LANE_Z + 1.2), 32.0), (120, (-0.35, -6.65, sets_hyd.LANE_Z + 1.5), (1.4, -5.75, sets_hyd.LANE_Z + 1.25), 32.0)])
+    S.cam("cam", keys=[(1, (0.25, -5.92, sets_hyd.LANE_Z + 1.6), (1.45, -6.12, sets_hyd.LANE_Z + 1.45), 30.0), (120, (0.3, -5.93, sets_hyd.LANE_Z + 1.6), (1.45, -6.12, sets_hyd.LANE_Z + 1.5), 32.0)])
     return S
 
 
@@ -677,13 +749,11 @@ def P_C1F():
         fa.location = (2.4 + 0.032 * (f - 1), -7.0, sets_hyd.LANE_Z)
         fa.keyframe_insert("location", frame=f)
     fa.rotation_euler = (0, 0, math.radians(90))
-    case = suitcase_at(Vector((0, 0, 0)))
-    attach_case = case
     bpy.context.scene.frame_set(1)
     hand = bone_tail(fa, "lowerarm02.R")
-    case.location = hand + Vector((0, 0, -0.22))
+    case = suitcase_at(hand)
     attach(case, fa, "lowerarm02.R")
-    S.cam("cam", keys=[(1, (0.1, -7.75, sets_hyd.LANE_Z + 0.95), (8.0, -6.8, sets_hyd.LANE_Z + 1.2), 34.0), (144, (0.15, -7.75, sets_hyd.LANE_Z + 0.95), (8.0, -6.8, sets_hyd.LANE_Z + 1.25), 36.0)])
+    S.cam("cam", keys=[(1, (-2.2, -7.6, sets_hyd.LANE_Z + 1.0), (8.0, -6.9, sets_hyd.LANE_Z + 1.15), 34.0), (144, (-2.15, -7.6, sets_hyd.LANE_Z + 1.0), (8.0, -6.9, sets_hyd.LANE_Z + 1.2), 36.0)])
     return S
 
 

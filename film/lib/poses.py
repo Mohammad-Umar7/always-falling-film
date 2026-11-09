@@ -33,10 +33,11 @@ def merge(*ds):
 
 ARMS_DOWN = {"upperarm01.L": (-7, 0, -35), "upperarm01.R": (-7, 0, 35), "lowerarm01.L": (7, 0, 0), "lowerarm01.R": (7, 0, 0),
              "upperarm02.L": (0, 0, -6), "upperarm02.R": (0, 0, 6)}
-HANDS_RELAX = merge(_fing("L", 13, 6), _fing("R", 13, 6))
+HANDS_RELAX = merge(_fing("L", 24, 12), _fing("R", 24, 12))
 FIST_L = _fing("L", 75, 35)
 FIST_R = _fing("R", 75, 35)
-POINT_L = _fing("L", 80, 40, skip=("finger2",))
+POINT_L = merge(_fing("L", 88, 52, skip=("finger2",)),          # index straight (it inherited the relaxed curl before)
+                {"finger2-1.L": (-4, 0, 0), "finger2-2.L": (0, 0, 0), "finger2-3.L": (0, 0, 0)})
 LOOK_UP = {"spine02": (-6, 0, 0), "neck01": (-16, 0, 0), "neck02": (-8, 0, 0), "head": (-22, 0, 0)}
 LOOK_UP_HIGH = {"spine02": (-10, 0, 0), "spine01": (-6, 0, 0), "neck01": (-22, 0, 0), "neck02": (-12, 0, 0), "head": (-28, 0, 0)}
 LOOK_DOWN = {"neck01": (14, 0, 0), "head": (16, 0, 0)}
@@ -50,7 +51,7 @@ PINKY_R = merge(_fing("R", 85, 45, skip=("finger5",)), {"finger5-1.R": (5, 0, 0)
 
 # lying on the back (rig rotated -90 deg about X so the face points up)
 LIE = merge(ARMS_DOWN, HANDS_RELAX, {"neck01": (14, 0, 0), "head": (-4, 0, 0),
-                                     "upperarm01.L": (-6, 0, -43), "upperarm01.R": (-6, 0, 43)})
+                                     "upperarm01.L": (-8, 0, -34), "upperarm01.R": (-8, 0, 34)})
 LIE_POINT_L = merge(LIE, POINT_L, {"upperarm01.L": (60, 0, -12), "upperarm02.L": (0, 0, 0), "lowerarm01.L": (6, 0, 0),
                                    "clavicle.L": (0, 0, 8)})
 LIE_HAND_ON_CHEST_L = merge(LIE, {"upperarm01.L": (28, 0, -30), "lowerarm01.L": (110, 0, 0)})
@@ -197,7 +198,7 @@ NIGHT_CAST = {
     "CLOTH_SHIRT_SON": ("#2E8AA6", "#143E56", "#5EC0DA"),
     "CLOTH_TROUSER_SON": ("#22223E", "#0E0E1E", "#3A3A62"),
     "CLOTH_BELT": ("#140C10", "#060406", "#2A1A20"),
-    "EYE_WHITE": ("#C4CAF0", "#7C82B4", "#E6EAFF"),
+    "EYE_WHITE": ("#A4ACD8", "#646A9C", "#C8CEF0"),
     "EYE_IRIS": ("#100A0C",),
     "EYE_LASH": ("#08060A",),
 }

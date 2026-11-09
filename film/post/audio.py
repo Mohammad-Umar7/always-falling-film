@@ -639,6 +639,10 @@ def build():
         put(strings(nt, 9.0, 0.05, 3.0, 0.8, 1.4), S(1452) + 1.0)
     put(whoosh(2.5, True, 0.45), S(1636))
 
+    # anime FX sound: the manga panel slam during the climb
+    put(whoosh(0.32, True, 0.4, 900, 9500), S(1546) - 0.28)
+    put(taiko(0.5, 0.45, 150), S(1546))
+    put(bell("A6", 1.5, 0.06), S(1546))
     # ---- C3d / C4: orbit - sudden quiet
     put(pad(["D3", "A3", "E4", "F#4"], 11.0, 0.08, 1800, 0.3, 3.0), S(1657))
     for k, nt in enumerate(["A5", "D6", "E6", "F#6"]):
@@ -661,6 +665,14 @@ def build():
         put(blip(vol=0.09), hb_t)
         hb_t += 2.0
 
+    # time-jump light sweeps: an airy whoosh + a faint high chime
+    for f_ in TL.SWEEPS:
+        put(whoosh(0.45, True, 0.13, 2500, 9500), S(f_) - 0.05)
+        put(bell("E7", 1.6, 0.025), S(f_) + 0.12)
+    # kirakira: the boy's eyes light up (rooftop wonder; looking up from his homework)
+    for f_, nt in ((889, "B6"), (2980, "A6")):
+        put(bell(nt, 2.2, 0.05), S(f_), pan=-0.2)
+        put(bell(shift(nt, 1), 1.6, 0.03), S(f_) + 0.09, pan=0.2)
     # ---- E/F/G: two lives (L = Hyderabad, R = Abu Dhabi)
     A(crickets(S(4570) - S(2401), 0.04, 5), S(2401), pan=-0.85, fade=1.0)
     A(city_hum(S(4570) - S(2401), 0.035, 6), S(2401), pan=0.85, fade=1.0)
@@ -730,6 +742,9 @@ def build():
     put(pad(["D3", "A3", "F#4", "B4"], 7.0, 0.08, 1800, 2.0, 0.5), S(5713))
     put(reverse_swell(2.0, 0.28, "D5"), S(5881) - 2.0)
 
+    # manga focus lines as both look up at the streak
+    put(boom(1.6, 0.32, 72), S(5758))
+    put(bell("D7", 2.0, 0.05), S(5758) + 0.05)
     # ---- I4: the fireball burns through the divider - the two halves become one place
     put(boom(5.0, 0.6, 34), S(5881))
     A(roar(2.5, 0.3, 22), S(5876), fade=0.3)
@@ -739,6 +754,9 @@ def build():
     put(bell("D6", 6.0, 0.12), S(5900))
     A(crickets(S(6125) - S(5960), 0.03, 14), S(5960), fade=2.0)
 
+    # the son finds his father in the lane: one low heartbeat, then silence
+    put(taiko(0.9, 0.3, 58), S(6121))
+    put(taiko(0.9, 0.22, 52), S(6121) + 0.32)
     # ---- J: silence. "Abba." The door.
     A(crickets(S(6600) - S(6121), 0.022, 11), S(6121), fade=1.0)
     A(chain_knock(0.30, 11), S(6505), pan=0.1, fade=0.002)
