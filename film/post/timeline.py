@@ -129,7 +129,8 @@ CREDITS = [
     ("gap", ""),
     ("small", "The family is fictional. The re-entry seen over Hyderabad is poetic licence."),
     ("gap", ""),
-    ("small", "Made in Blender with MPFB (CC0) and NASA imagery · voices: Piper TTS (IIT Madras IndicTTS)"),
+    ("small", "Made in Blender with MPFB (CC0) and NASA imagery · voices: Microsoft neural TTS"),
+    ("small", "Instruments: VS Chamber Orchestra 2 CE (CC0) · sound effects: Freesound (CC0)"),
     ("small", "AI-assisted production: full declaration in the submission docket"),
     ("gap", ""),
     ("line", "DADC Short Film Festival 2026 · IIT Delhi Abu Dhabi"),
@@ -160,6 +161,9 @@ LABELS = [
     (5161, 5352, "HYDERABAD · THE SON, 1992", "THE FATHER · HOME AFTER 17 YEARS"),
     (5713, 5880, "THE SON · ON THE ROOF", "THE FATHER · IN THE LANE BELOW"),
 ]
+
+# one line of history over the opening black, so the story makes sense from the first second (V3)
+OPENING = (6, 94, ["In the 1970s, hundreds of thousands of men left India", "to build the cities of the Gulf."])
 
 # hand-drawn look switches
 STYLE = {"ink": True, "boil": False, "paper": True}

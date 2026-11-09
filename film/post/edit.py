@@ -701,6 +701,26 @@ def title_card(f, a, b):
     return img
 
 
+def opening_card(img, f):
+    """the history line over the opening black"""
+    op = getattr(TL, "OPENING", None)
+    if not op or not (op[0] <= f <= op[1]):
+        return img
+    a, b, lines = op
+    al = max(0.0, min(1.0, (f - a) / 18.0, (b - f) / 16.0))
+    pil = Image.fromarray((np.clip(img, 0, 1) * 255).astype(np.uint8)).convert("RGBA")
+    ov = Image.new("RGBA", pil.size, (0, 0, 0, 0))
+    d = ImageDraw.Draw(ov)
+    fn = font(F_TITLE2, 46)
+    y = H / 2 - 62
+    for ln in lines:
+        tw = d.textlength(ln, font=fn)
+        d.text(((W - tw) / 2, y), ln, font=fn, fill=(236, 232, 222, int(255 * al)))
+        y += 70
+    pil = Image.alpha_composite(pil, ov).convert("RGB")
+    return np.asarray(pil).astype(np.float32) / 255.0
+
+
 def credits_card(f, a, b):
     img = np.zeros((H, W, 3), np.float32)
     rng = random.Random(91)
@@ -913,6 +933,7 @@ def make_frame(f):
         img = img * ((f - 97) / 23.0)
     if 7170 <= f:
         img = img * max(0.0, (7200 - f) / 30.0)
+    img = opening_card(img, f)
     return (np.clip(img, 0, 1) * 255).astype(np.uint8)
 
 
