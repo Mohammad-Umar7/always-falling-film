@@ -7,7 +7,8 @@ from af import hexc, N, I, O, L, mixcol, math_, maprange, ramp, new_mat, finish_
 EARTH_R = 3000.0          # scaled Earth (altitude/radius ratio kept ~ real for 600 km orbit)
 ALT = 280.0
 DL = os.path.join(af.ASSETS, "dl")
-DAY_TEX = os.path.join(af.ASSETS, "earth_day_poster.png")      # posterised cel map (matches the 92,000-orbit montage)
+DAY_TEX = os.path.join(af.ASSETS, "earth_day_smooth.png")      # smooth map; the cel banding happens in the shader
+POSTER = {"hue": 18, "sat": 4, "val": 5}                         # HSV band counts (resolution-independent posterisation)
 CLOUD = {"scale": 6.5, "cover": 0.55, "white": "#D6DEF6"}
 NIGHT_TEX = os.path.join(af.ASSETS, "earth_night_clean.png")
 
@@ -69,16 +70,31 @@ def earth(center=(0, 0, -(EARTH_R + ALT)), rot=(0, 0, 0), sun_dir=(1, 0, 0), lig
     I(hs, "Saturation").default_value = 1.15
     I(hs, "Value").default_value = 1.12
     L(nt, O(day, "Color"), I(hs, "Color"))
+    src_col = O(hs, "Color")
+    if POSTER:
+        # posterise per pixel AFTER bilinear sampling: band edges are smooth curves at any zoom (no texel stairs)
+        hsv = N(nt, "ShaderNodeSeparateColor")
+        hsv.mode = "HSV"
+        L(nt, src_col, hsv.inputs[0])
+        q = []
+        for k, n_ in enumerate((POSTER["hue"], POSTER["sat"], POSTER["val"])):
+            snapped = math_(nt, "SNAP", hsv.outputs[k], 1.0 / n_)
+            q.append(math_(nt, "ADD", snapped, 0.5 / n_))
+        pc = N(nt, "ShaderNodeCombineColor")
+        pc.mode = "HSV"
+        for k in range(3):
+            L(nt, q[k], pc.inputs[k])
+        src_col = O(pc, "Color")
     sep = N(nt, "ShaderNodeSeparateColor")
-    L(nt, O(hs, "Color"), sep.inputs[0])
+    L(nt, src_col, sep.inputs[0])
     comb = N(nt, "ShaderNodeCombineColor")
     for k, ch in enumerate(("Red", "Green", "Blue")):
         L(nt, O(sep, ch), comb.inputs[k])
     blue_dom = math_(nt, "SUBTRACT", O(sep, "Blue"), math_(nt, "MAXIMUM", O(sep, "Red"), O(sep, "Green")))
     ocean = maprange(nt, blue_dom, 0.0, 0.08, 0, 1)
     bwo = N(nt, "ShaderNodeRGBToBW")
-    L(nt, O(day, "Color"), I(bwo, "Color"))
-    oc_r = ramp(nt, [(0.0, "#0E3A84"), (0.2, "#1B5CB4")], "LINEAR", fac=O(bwo, "Val"))
+    L(nt, src_col, I(bwo, "Color"))
+    oc_r = ramp(nt, [(0.0, "#0E3A84"), (0.12, "#1B5CB4")], "CONSTANT", fac=O(bwo, "Val"))
     albedo = mixcol(nt, math_(nt, "MULTIPLY", ocean, 0.75), O(comb, "Color"), O(oc_r, "Color"))
     # toon light: diffuse -> shader to rgb -> bands
     dif = N(nt, "ShaderNodeBsdfDiffuse")

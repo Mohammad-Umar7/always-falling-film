@@ -4,24 +4,24 @@
 <meta charset="utf-8">
 <title>Always Falling: Docket</title>
 <style>
-  @page { size: A4; margin: 15mm 17mm 14mm 17mm; }
+  @page { size: A4; margin: 13mm 15mm 12mm 15mm; }
   :root { --ink: #1b1a24; --muted: #5d5a6e; --accent: #c2410c; --cool: #2a4f9e; --rule: #d9d6e3; }
   * { box-sizing: border-box; }
-  body { margin: 0; color: var(--ink); background: #fff; font: 10pt/1.42 "Segoe UI", "Noto Sans", Arial, sans-serif; }
+  body { margin: 0; color: var(--ink); background: #fff; font: 9.4pt/1.36 "Segoe UI", "Noto Sans", Arial, sans-serif; }
   header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid var(--ink); padding-bottom: 6px; margin-bottom: 10px; }
   h1 { margin: 0; font: 600 25pt/1 Georgia, "Times New Roman", serif; letter-spacing: 0.06em; }
   .sub { color: var(--muted); font-size: 9pt; margin-top: 4px; }
   .meta { text-align: right; font-size: 8.6pt; color: var(--muted); line-height: 1.5; }
   .meta b { color: var(--ink); font-weight: 600; }
-  h2 { font: 600 9.5pt/1.2 "Segoe UI", Arial, sans-serif; text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent);
-       margin: 13px 0 5px; padding-bottom: 3px; border-bottom: 1px solid var(--rule); }
+  h2 { font: 600 9pt/1.2 "Segoe UI", Arial, sans-serif; text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent);
+       margin: 10px 0 4px; padding-bottom: 3px; border-bottom: 1px solid var(--rule); }
   p { margin: 0 0 6px; }
-  .synopsis p { font-size: 10.3pt; }
+  .synopsis p { font-size: 9.8pt; }
   ul { margin: 0 0 6px 0; padding-left: 15px; }
-  li { margin-bottom: 3px; }
+  li { margin-bottom: 2px; }
   .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  table { width: 100%; border-collapse: collapse; font-size: 8.8pt; }
-  td, th { text-align: left; vertical-align: top; padding: 4px 6px; border-bottom: 1px solid var(--rule); }
+  table { width: 100%; border-collapse: collapse; font-size: 8.4pt; }
+  td, th { text-align: left; vertical-align: top; padding: 3px 5px; border-bottom: 1px solid var(--rule); }
   th { width: 31%; color: var(--ink); font-weight: 600; }
   .ai { border: 1.5px solid var(--accent); border-radius: 6px; padding: 8px 10px; background: #fff8f3; }
   .ai h2 { margin-top: 0; }
@@ -63,8 +63,8 @@
 <div>
 <h2>Process</h2>
 <ul>
-  <li>Fully 3D, rendered in <b>Blender 5.1 (EEVEE)</b> with a custom anime pipeline written in Python: cel shading, ink outlines, animation "on twos", impact frames, speed lines and bloom.</li>
-  <li>Characters built on <b>MPFB/MakeHuman</b> base meshes (CC0), with hand-coded garments, hair and anime eyes, plus a scripted <b>facial-expression system</b> (blinks, lip-sync to the dialogue, tears) keyed to every story beat.</li>
+  <li>Fully 3D, rendered in <b>Blender 5.1 (EEVEE)</b> through a custom anime pipeline written in Python: cel shading, ink outlines and animation "on twos". In post: impact frames, manga focus lines, a panel-slam montage, speed lines, light sweeps for time jumps, god rays and bloom.</li>
+  <li>Characters built on <b>MPFB/MakeHuman</b> base meshes (CC0), with hand-coded garments, hair and anime eyes. A scripted <b>facial-expression system</b> (brows, lids, mouth, blinks, lip-sync, tears, eye sparkles) is keyed to every story beat on an acting sheet.</li>
   <li>Procedural sets: Hyderabad Old City with the Charminar skyline; 1970s Abu Dhabi construction sites; the Kosmos-3M launch; Earth from orbit from NASA Blue/Black Marble maps (public domain); a 92,000-orbit "cocoon"; the re-entry plasma.</li>
   <li><b>Split-screen grammar:</b> cool Hyderabad on the left, warm Abu Dhabi on the right. The divider grows over 17 years and burns away at re-entry.</li>
   <li><b>Sound:</b> score and effects synthesised in code (tanpura drone, a plucked "promise" motif, pads and percussion). Stereo follows the split, with Hyderabad in the left speaker and Abu Dhabi in the right. Voices are processed as a rooftop, a ground-station radio and cassette tape.</li>

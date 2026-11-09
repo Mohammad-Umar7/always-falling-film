@@ -43,6 +43,20 @@ def frames_of(sid):
     return _index[sid]
 
 
+NO_CLEAN = {"C3d", "C4", "D1", "D2", "H1", "I2a", "I2b", "I2c"}      # space: keep tiny stars and city lights
+
+
+def clean_cel(im):
+    """EEVEE light/shadow speckle -> clean cel gradients. Strong median+bilateral smoothing only in flat areas;
+    outlines, eyes, sparkles and ramp steps (high local contrast) keep the light pass."""
+    light = cv2.bilateralFilter(im, 7, 24, 5)
+    g = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY).astype(np.float32)
+    edges = cv2.GaussianBlur(np.abs(cv2.Laplacian(cv2.GaussianBlur(g, (0, 0), 1.2), cv2.CV_32F)), (0, 0), 2.0)
+    w = np.clip(1.0 - edges / 6.0, 0, 1)[..., None]
+    strong = cv2.bilateralFilter(cv2.medianBlur(im, 5), 9, 48, 9).astype(np.float32)
+    return (strong * w + light.astype(np.float32) * (1 - w)).astype(np.uint8)
+
+
 def load(sid, f, size=None):
     fs = frames_of(sid)
     if not fs:
@@ -52,8 +66,7 @@ def load(sid, f, size=None):
     i = bisect.bisect_right(fs, f) - 1
     n = fs[max(0, i)]
     im = cv2.imread(os.path.join(R, sid, f"{n:04d}.png"), cv2.IMREAD_COLOR)
-    # EEVEE soft-shadow speckle -> clean cel areas; edges (outlines, ramp steps) survive the bilateral filter
-    im = cv2.bilateralFilter(im, 7, 24, 5)
+    im = clean_cel(im) if sid not in NO_CLEAN else cv2.bilateralFilter(im, 7, 24, 5)
     im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB).astype(np.float32) / 255.0
     if size and (im.shape[1], im.shape[0]) != size:
         im = cv2.resize(im, size, interpolation=cv2.INTER_AREA)
@@ -373,6 +386,50 @@ def motes(img, f, seed, n=26, color=(1.0, 0.86, 0.6), size=(2.0, 5.0), drift=(0.
     return img + ov * alpha * np.array(color, np.float32)
 
 
+_DRAW = {}
+
+
+def line_boil(img, f, amp=1.05):
+    """hand-drawn 'living line': a smooth random warp redrawn every 2 frames (flat colour areas don't move,
+    only edges wobble a little - like lines traced by hand on each drawing)"""
+    h, w = img.shape[:2]
+    if "grid" not in _DRAW:
+        gy, gx = np.mgrid[0:h, 0:w].astype(np.float32)
+        _DRAW["grid"] = (gx, gy)
+    gx, gy = _DRAW["grid"]
+    rng = np.random.default_rng((f // 2) * 7919 + 13)
+    cw, ch = w // 48 + 2, h // 48 + 2
+    dx = cv2.resize(rng.standard_normal((ch, cw)).astype(np.float32), (w, h), interpolation=cv2.INTER_CUBIC) * amp
+    dy = cv2.resize(rng.standard_normal((ch, cw)).astype(np.float32), (w, h), interpolation=cv2.INTER_CUBIC) * amp
+    return cv2.remap(img, gx + dx, gy + dy, cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT)
+
+
+def ink_edges(img, strength=0.42, lo=0.06, hi=0.2):
+    """trace contour edges in ink (geometry edges that have no outline mesh get a drawn line too)"""
+    l = cv2.GaussianBlur(lum(img), (0, 0), 0.8)
+    gx = cv2.Sobel(l, cv2.CV_32F, 1, 0, ksize=3)
+    gy = cv2.Sobel(l, cv2.CV_32F, 0, 1, ksize=3)
+    m = np.sqrt(gx * gx + gy * gy)
+    e = np.clip((m - lo) / (hi - lo), 0, 1)
+    l8 = np.clip(lum(img) * 255, 0, 255).astype(np.uint8)
+    pts = np.clip((l8.astype(np.float32) - cv2.medianBlur(l8, 9).astype(np.float32)) / 25.0, 0, 1)
+    pts = cv2.dilate(pts, np.ones((7, 7), np.uint8))
+    e = e * (1 - pts)
+    return img * (1 - e[..., None] * strength) + e[..., None] * strength * np.array([0.03, 0.025, 0.06], np.float32)
+
+
+def paper(img, k=0.045):
+    """drawing paper: fine static fibre grain (multiplied)"""
+    h, w = img.shape[:2]
+    if "paper" not in _DRAW:
+        rng = np.random.default_rng(42)
+        n = rng.standard_normal((h, w)).astype(np.float32)
+        fib = cv2.GaussianBlur(n, (0, 0), sigmaX=6.0, sigmaY=0.6) * 2.2 + cv2.GaussianBlur(n, (0, 0), 0.8) * 0.6
+        fib = (fib - fib.mean()) / (fib.std() + 1e-6)
+        _DRAW["paper"] = (1.0 + fib * 0.5).astype(np.float32)
+    return img * (1 - k + k * _DRAW["paper"][..., None])
+
+
 def dot_pos(t, x0=240, x1=1680, y=150):
     return x0 + (x1 - x0) * t, y + 70 * math.sin(math.pi * t) * -1 + 70
 
@@ -406,25 +463,67 @@ def divider_w(f):
     return ks[-1][1]
 
 
+SLANT = 44.0          # px the gutter leans across the frame height (manga panel cut)
+_PANEL = {}
+
+
+def _panel_fields():
+    if "d" not in _PANEL:
+        yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
+        xc = 960.0 + SLANT * (0.5 - yy / H)
+        _PANEL["d"] = xx - xc                                   # signed distance (px) from the slanted centre line
+        # the gap is a strip of night sky: deep gradient + small stars (only the satellite crosses it)
+        rng = np.random.default_rng(1975)
+        sky = np.zeros((H, W, 3), np.float32)
+        t = (yy / H)[..., None]
+        sky[:] = np.array([0.03, 0.035, 0.09], np.float32) * (1 - t) + np.array([0.06, 0.05, 0.14], np.float32) * t
+        for _ in range(420):
+            x, y = rng.integers(0, W), rng.integers(0, H)
+            br = rng.uniform(0.35, 1.0)
+            cv2.circle(sky, (int(x), int(y)), 1 if br < 0.8 else 2, (br * 0.9, br * 0.92, br), -1, cv2.LINE_AA)
+        _PANEL["sky"] = sky
+    return _PANEL["d"], _PANEL["sky"]
+
+
 def draw_divider(img, hw, alpha=1.0):
-    if hw <= 0:
+    """Two slanted manga panels with ink-and-paper borders; the gap between them widens over the years."""
+    if alpha <= 0:
         return img
-    x0, x1 = int(960 - hw), int(960 + hw)
-    out = img.copy()
-    out[:, x0:x1] = out[:, x0:x1] * (1 - alpha)
-    # glowing edges: cool on the Hyderabad side, warm on the Abu Dhabi side
-    edge = np.zeros(img.shape[:2], np.float32)
-    edge[:, max(0, x0 - 1):x0 + 1] = 1.0
-    eg = cv2.GaussianBlur(edge, (0, 0), 3)[..., None] * alpha
-    edge2 = np.zeros(img.shape[:2], np.float32)
-    edge2[:, x1 - 1:min(W, x1 + 1)] = 1.0
-    eg2 = cv2.GaussianBlur(edge2, (0, 0), 3)[..., None] * alpha
-    return out + eg * np.array([0.35, 0.6, 1.0], np.float32) * 0.8 + eg2 * np.array([1.0, 0.7, 0.35], np.float32) * 0.8
+    d, sky = _panel_fields()
+    g = max(4.0, hw)
+    gap = np.clip((g - np.abs(d)) / 1.2 + 0.5, 0, 1)                        # 1 inside the gap (AA edge)
+    border = np.clip((g + 4.5 - np.abs(d)) / 1.2 + 0.5, 0, 1) - gap        # 4.5 px paper-white border
+    ink = np.clip((g + 6.5 - np.abs(d)) / 1.2 + 0.5, 0, 1) - gap - border  # 2 px ink line outside the border
+    side = (d > 0)[..., None]
+    paper = np.where(side, np.array([1.0, 0.95, 0.88], np.float32), np.array([0.92, 0.95, 1.0], np.float32))
+    out = img * (1 - gap[..., None] * alpha) + sky * (gap[..., None] * alpha)
+    out = out * (1 - border[..., None] * alpha) + paper * (border[..., None] * alpha)
+    out = out * (1 - ink[..., None] * 0.85 * alpha)
+    return out
+
+
+PANEL_SHIFT = {"G2R": 1.0}      # fraction of the gap width to push this half outward (its subject hugs the inner edge)
+
+
+def _shift_out(img, px, right):
+    if px <= 0:
+        return img
+    out = np.empty_like(img)
+    if right:
+        out[:, px:] = img[:, :-px]
+        out[:, :px] = img[:, :1]
+    else:
+        out[:, :-px] = img[:, px:]
+        out[:, -px:] = img[:, -1:]
+    return out
 
 
 def split(f, ls, rs, lf, rf, kind, right_warm=False):
     L = load(ls, lf, (960, 1080))
     Rr = load(rs, rf, (960, 1080))
+    hw = int(divider_w(f))
+    L = _shift_out(L, int(hw * PANEL_SHIFT.get(ls, 0.0)), right=False)
+    Rr = _shift_out(Rr, int(hw * PANEL_SHIFT.get(rs, 0.0)), right=True)
     L = grade(L, "night" if kind != "mixed" else "night")
     Rr = grade(Rr, "warm" if right_warm else ("dusk" if kind in ("mixed",) else "night"))
     if not right_warm and kind != "mixed":
@@ -433,6 +532,22 @@ def split(f, ls, rs, lf, rf, kind, right_warm=False):
 
 
 # ------------------------------------------------------------------ text
+def caption_box(d, x, y, txt, fn, align="left", alpha=1.0, tag_col=None):
+    """manga caption: paper box, ink border, small coloured tab"""
+    tw = d.textlength(txt, font=fn)
+    pad_x, pad_y = 16, 9
+    bw, bh = tw + pad_x * 2 + (10 if tag_col else 0), fn.size + pad_y * 2
+    x0 = x if align == "left" else (x - bw if align == "right" else x - bw / 2)
+    a = int(255 * alpha)
+    d.rectangle([x0 + 4, y + 4, x0 + bw + 4, y + bh + 4], fill=(0, 0, 0, int(90 * alpha)))
+    d.rectangle([x0, y, x0 + bw, y + bh], fill=(248, 244, 234, a), outline=(16, 14, 22, a), width=3)
+    tx = x0 + pad_x
+    if tag_col:
+        d.rectangle([x0 + 9, y + 9, x0 + 15, y + bh - 9], fill=tag_col + (a,))
+        tx += 10
+    d.text((tx, y + pad_y - 2), txt, font=fn, fill=(18, 16, 26, a))
+
+
 def text_overlay(img, f):
     items = []
     for (a, b, txt, where, style) in TL.TEXTS:
@@ -440,19 +555,39 @@ def text_overlay(img, f):
             items.append((a, b, txt, where, style))
     subs = [s for s in TL.SUBS if s[0] <= f <= s[1]]
     counter = TL.H1_COUNTER[0] <= f <= TL.H1_COUNTER[1]
-    if not items and not subs and not counter:
+    labels = [l for l in TL.LABELS if l[0] <= f <= l[1]]
+    if not items and not subs and not counter and not labels:
         return img
     pil = Image.fromarray(np.clip(img * 255, 0, 255).astype(np.uint8))
     ov = Image.new("RGBA", pil.size, (0, 0, 0, 0))
     d = ImageDraw.Draw(ov)
+    for (a, b, lt, rt) in labels:
+        al = min(1.0, (f - a) / 10.0, (b - f) / 10.0)
+        fn = font(F_SUB, 32)
+        try:
+            fn.set_variation_by_name("Bold")
+        except Exception:
+            pass
+        if lt:
+            caption_box(d, 30, 28, lt, fn, "left", al, tag_col=(70, 120, 230))
+        if rt:
+            caption_box(d, W - 30, 28, rt, fn, "right", al, tag_col=(235, 140, 60))
     for (a, b, txt, where, style) in items:
         fade = min(1.0, (b - f) / 12.0) if b - f < 12 else 1.0
         if style in ("log", "stamp"):
             n = int((f - a) * (0.9 if style == "log" else 1.4))
             shown = txt[:max(0, n)]
             fn = font(F_LOG, 30 if style == "log" else 26)
-            y = {"bl": 960, "bl2": 1000, "bl3": 1040, "br_half": 960}[where]
+            y = {"bl": 960, "bl2": 1000, "bl3": 1040, "br_half": 960, "tc": 96}[where]
             x = 1040 if where == "br_half" else 80
+            if style == "stamp" and where == "tc":
+                fn2 = font(F_TITLE, 44)
+                al = min(1.0, (f - a) / 8.0) * fade
+                tw2 = d.textlength(txt, font=fn2)
+                bx0, by0 = (W - tw2) / 2 - 22, 96
+                d.rectangle([bx0, by0, bx0 + tw2 + 44, by0 + 66], fill=(10, 10, 20, int(225 * al)), outline=(244, 238, 226, int(255 * al)), width=3)
+                d.text(((W - tw2) / 2, by0 + 6), txt, font=fn2, fill=(250, 244, 230, int(255 * al)))
+                continue
             if style == "stamp":
                 y = 70
                 x = 1040 if where == "br_half" else 70
@@ -720,8 +855,14 @@ def make_frame(f):
     if f in ex.get("impact", []):
         img = impact(np.clip(img, 0, 1), f, red=(g == "fire" or kind == "i4"))
     if kind not in ("title", "credits", "black"):
+        if TL.STYLE.get("ink", True):
+            img = ink_edges(np.clip(img, 0, 1.5))
+        if TL.STYLE.get("boil", True):
+            img = line_boil(img, f)
         img = vignette(img, 0.3)
-        img = grain(img, f, 0.011)
+        if TL.STYLE.get("paper", True):
+            img = paper(img)
+        img = grain(img, f, 0.008)
     img = text_overlay(np.clip(img, 0, 1), f)
     # global fades
     if kind == "black":

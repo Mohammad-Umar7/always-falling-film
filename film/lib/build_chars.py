@@ -79,7 +79,7 @@ def build(name, age, x, macros, wardrobe, hair_style, hair_mat, skin_mat, mousta
         chars.add_subsurf(g, 1)
     shell = chars.hair_shell(body, rig, name + "_hairshell", hair_mat,
                              hairline=0.052 if hair_style != "boy" else 0.06, side_frac=0.45 if hair_style == "70s" else 0.78,
-                             nape=0.035 if hair_style == "70s" else 0.115, inflate=0.014 if hair_style == "70s" else 0.0045)
+                             nape=0.035 if hair_style == "70s" else 0.03, inflate=0.014 if hair_style == "70s" else 0.0055)
     locks = chars.hair_locks(body, rig, shell, name + "_hairlocks", hair_mat, style="70s" if hair_style != "boy" else "side",
                              count=lock_count, seed=int(age * 7) % 97, part_x=part_x,
                              length=(0.07, 0.14) if hair_style == "70s" else (0.022, 0.045),

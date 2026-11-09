@@ -34,7 +34,7 @@ class Shot:
         # close-ups get more TAA samples: lit cel areas near a band threshold dither at 16 samples
         HQ = {"J2", "J1", "J3", "I3L", "I3R", "I1L", "I1R", "G1L", "F1L", "F5L", "F5R", "E1R", "E2R", "B4a", "B4b", "F2L", "F2R"}
         if sid in HQ:
-            samples = max(samples, 48)
+            samples = max(samples, 32)
         samples = int(os.environ.get("AF_SAMPLES", samples))
         self.sc = af.setup_scene(w=w, h=h, samples=samples, f0=1, f1=frames)
         self.sc.frame_set(1)

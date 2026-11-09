@@ -19,3 +19,6 @@ __pycache__/
 *.pyc
 film/tests/*.log
 film/faces_on.flag
+film/renders_prev/
+film/renders_v1/
+film/renders_old/

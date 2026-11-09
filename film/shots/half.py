@@ -134,12 +134,18 @@ def P_E1R():
     env = envelope("e1r_env", (1.12, 0.95, 0.785), (math.radians(90), 0, math.radians(-12)))
     el = scene_b.ik_arm(fa, "L", Vector((0.78, 0.87, 0.815)))
     er = scene_b.ik_arm(fa, "R", Vector((1.02, 0.9, 0.82)))
-    # fold: note slides toward the envelope (stepped)
+    # fold: note slides toward the envelope (stepped) - both hands travel with it, fingertips on the note
     for f, p in ((1, (0.9, 0.9, 0.79)), (40, (0.9, 0.9, 0.79)), (70, (1.0, 0.93, 0.80)), (100, (1.1, 0.95, 0.80)), (144, (1.1, 0.95, 0.80))):
         n_.location = p
         n_.keyframe_insert("location", frame=f)
-    af.set_interp(n_, "CONSTANT")
-    S.cam("cam", keys=[(1, (1.45, 1.0, 1.32), (0.86, 0.6, 0.98), 30.0), (144, (1.43, 1.0, 1.3), (0.86, 0.62, 0.97), 32.0)])
+        d = Vector(p) - Vector((0.9, 0.9, 0.79))
+        el.location = Vector((0.84, 0.885, 0.80)) + d          # pushes the note along the table
+        er.location = Vector((1.16, 0.93, 0.80))               # steadies the envelope
+        el.keyframe_insert("location", frame=f)
+        er.keyframe_insert("location", frame=f)
+    for o in (n_, el, er):
+        af.set_interp(o, "CONSTANT")
+    S.cam("cam", keys=[(1, (1.45, 0.42, 1.52), (0.9, 0.76, 0.97), 22.0), (144, (1.44, 0.43, 1.51), (0.92, 0.77, 0.96), 23.0)])
     return S
 
 
@@ -253,7 +259,7 @@ def P_F1R():
             o.scale = (1, 1, 0.55 + 0.45 * min(1.0, t * (1.0 + 0.3 * (k % 3))))
             o.keyframe_insert("scale", frame=f)
         af.set_interp(o, "CONSTANT")
-    S.cam("cam", keys=[(1, (1.6, -4.6, 7.4), (-2.0, -40.0, 9.0), 28.0), (240, (1.9, -4.2, 7.6), (-2.0, -40.0, 10.0), 26.0)])
+    S.cam("cam", keys=[(1, (1.6, -4.6, 7.4), (-9.0, -40.0, 9.0), 28.0), (240, (1.9, -4.2, 7.6), (-8.0, -40.0, 10.0), 26.0)])
     return S
 
 
@@ -374,11 +380,31 @@ def P_F4L():
     boy = r["BOY_79"]
     place(boy, (0.3, -3.8, 0.06), 0)
     poses.apply(boy, poses.merge(poses.STAND_LOOK_UP, poses.FIST_R), frame=1)
-    umb_m = af.toon_mat("umbrella", "#2A2A3A", shadow="#121218", light="#4A4A62")
-    canopy = af.uv_sphere("umbrella", 0.55, (0.2, -3.84, 1.55), umb_m, 24, 12)
-    canopy.scale = (1, 1, 0.35)
-    af.add_outline(canopy, 0.01, "#05060E")
-    pole = af.cylinder("umbrella_pole", 0.012, 0.8, (0.2, -3.84, 1.2), umb_m, 6)
+    # a real umbrella: 8 scalloped panels on a shallow cone, ribs, a tip and a curved handle
+    import bmesh
+    umb_m = af.toon_mat("umbrella", "#9A2438", shadow="#4A0E22", light="#D04A5E")
+    rib_m = af.toon_mat("umbrella_rib", "#1A1418", shadow="#08060A", light="#3A3038")
+    c0 = Vector((0.2, -3.84, 1.62))
+    bm_ = bmesh.new()
+    apex = bm_.verts.new(c0 + Vector((0, 0, 0.2)))
+    rim, R, n = [], 0.58, 16
+    for k in range(n):
+        a_ = 2 * math.pi * k / n
+        r_ = R * (1.0 if k % 2 == 0 else 0.9)                 # scallops between the ribs
+        z_ = -0.03 if k % 2 == 0 else 0.03
+        rim.append(bm_.verts.new(c0 + Vector((math.cos(a_) * r_, math.sin(a_) * r_, z_))))
+    for k in range(n):
+        bm_.faces.new((apex, rim[k], rim[(k + 1) % n]))
+    me = bpy.data.meshes.new("umbrella")
+    bm_.to_mesh(me)
+    bm_.free()
+    canopy = af.link(bpy.data.objects.new("umbrella", me))
+    me.materials.append(umb_m)
+    sol = canopy.modifiers.new("thick", "SOLIDIFY")
+    sol.thickness = 0.01
+    af.add_outline(canopy, 0.008, "#05060E")
+    pole = af.cylinder("umbrella_pole", 0.011, 0.86, (0.2, -3.84, 1.39), rib_m, 8)
+    af.uv_sphere("umbrella_tip", 0.02, c0 + Vector((0, 0, 0.23)), rib_m, 8, 6)
     scene_b.ik_arm(boy, "R", Vector((0.2, -3.84, 1.0)))
     S.cam("cam", keys=[(1, (0.9, -1.4, 0.7), (0.2, -10.0, 4.5), 26.0), (240, (0.88, -1.45, 0.7), (0.2, -10.0, 4.7), 26.0)])
     return S
@@ -405,7 +431,7 @@ def P_F5L():
     seat(boy, 0.52)
     hands_on_knees(boy)
     A = sets_auh.Auh(time="night")
-    rec, reels = A.cassette_recorder(Vector((-1.25, 0.2, 0.53)), rot=math.radians(90), name="boyplayer")
+    rec, reels = A.cassette_recorder(Vector((-1.2, -0.45, 0.53)), rot=math.radians(70), name="boyplayer")   # beside him, in view
     for rl in reels:
         rl.rotation_euler = (0, 0, 0)
         rl.keyframe_insert("rotation_euler", frame=1)
@@ -445,7 +471,7 @@ def P_G1L():
     bpy.context.scene.frame_set(1)
     seat(boy, 0.52)
     A = sets_auh.Auh(time="night")
-    rec, reels = A.cassette_recorder(Vector((-1.25, 0.2, 0.53)), rot=math.radians(90), name="boyplayer")
+    rec, reels = A.cassette_recorder(Vector((-1.2, -0.45, 0.53)), rot=math.radians(70), name="boyplayer")   # beside him, in view
     for rl in reels:
         rl.rotation_euler = (0, 0, 0)
         rl.keyframe_insert("rotation_euler", frame=1)
@@ -537,16 +563,7 @@ def P_I1L():
     poses.apply(son, sitp, frame=1)
     seat(son, 0.96)
     hands_on_knees(son)
-    # walkman headphones: a thin band + two ear cups
-    hp = af.toon_mat("headphones", "#2A2A36", shadow="#101016", light="#4A4A5E")
-    head = bone_tail(son, "head")
-    band = af.cylinder("hp_band", 0.085, 0.012, head + Vector((0, 0.01, -0.02)), hp, 24)
-    band.rotation_euler = (0, math.radians(90), 0)
-    for s in (-1, 1):
-        cup = af.cylinder(f"hp_cup{s}", 0.028, 0.02, head + Vector((s * 0.082, 0.0, -0.08)), hp, 16)
-        cup.rotation_euler = (0, math.radians(90), 0)
-        attach(cup, son, "head")
-    attach(band, son, "head")
+    # (no headphones: continuity with I3L minutes later)
     S.cam("cam", keys=[(1, (2.3, -2.6, 1.1), (0.6, -5.2, 1.0), 34.0), (192, (2.25, -2.65, 1.1), (0.6, -5.2, 1.0), 35.0)])
     return S
 
@@ -668,7 +685,18 @@ def P_J3():
     fa = r["FATHER_92"]
     place(fa, (1.4, -6.12, sets_hyd.LANE_Z), 180)
     poses.apply(fa, poses.merge(poses.STAND, {"head": (10, 0, 0)}), frame=1)
-    eh = scene_b.ik_arm(fa, "L", Vector((1.28, -5.72, sets_hyd.LANE_Z + 1.25)))
+    # two knocks with his right hand (camera side) on the sound cues (timeline 6505 / 6522 = local 25 / 42);
+    # the arm rises only for the knocks, then hangs again before the door swings open
+    eh = scene_b.ik_arm(fa, "R", Vector((1.6, -5.72, sets_hyd.LANE_Z + 1.3)))
+    rest, back, hit = -5.74, -5.88, -5.69
+    for f, y in ((1, rest), (19, back), (25, hit), (29, rest), (36, back), (42, hit), (46, rest), (120, rest)):
+        eh.location = (1.6, y, sets_hyd.LANE_Z + 1.3)
+        eh.keyframe_insert("location", frame=f)
+    af.set_interp(eh, "CONSTANT")
+    con = fa.pose.bones["lowerarm02.R"].constraints[-1]
+    for f, v in ((1, 0.0), (13, 0.0), (17, 1.0), (50, 1.0), (56, 0.0)):
+        con.influence = v
+        con.keyframe_insert("influence", frame=f)
     suitcase_at(Vector((1.8, -6.15, sets_hyd.LANE_Z + 0.41)))
     # door leaves swing inward from frame 70, warm light spills out
     for o in list(bpy.data.objects):

@@ -56,16 +56,15 @@ DIVIDER = [(1, 3), (2400, 4), (2880, 10), (3360, 40), (3840, 90), (4080, 120), (
 # typewriter mission-log + stamps: (start, end, text, where, style)
 TEXTS = [
     (395, 490, "HYDERABAD · APRIL 1975", "bl", "stamp"),
-    (1290, 1340, "ABU DHABI · 1975", "br_half", "stamp"),
-    (1360, 1436, "19 APRIL 1975", "bl", "stamp"),
+    (1360, 1436, "19 APRIL 1975", "tc", "stamp"),
     (1680, 1728, "ARYABHATA  ·  ORBIT 1", "bl", "log"),
     (2180, 2400, "DAY 4.  POWER FAILURE.  EXPERIMENTS HALTED.", "bl", "log"),
     (2250, 2400, "STATUS: SILENT.", "bl2", "log"),
     (2310, 2400, "STILL IN ORBIT.", "bl3", "log"),
-    (2410, 2530, "1976", "bl", "stamp"),
-    (2890, 3110, "1977", "bl", "stamp"),
-    (3130, 3350, "1979", "bl", "stamp"),
-    (3370, 3590, "1980", "bl", "stamp"),
+    (2410, 2530, "1976", "tc", "stamp"),
+    (2890, 3110, "1977", "tc", "stamp"),
+    (3130, 3350, "1979", "tc", "stamp"),
+    (3370, 3590, "1980", "tc", "stamp"),
     (4200, 4380, "MARCH 1981.  MAINFRAME SILENT.", "bl", "log"),
     (4440, 4560, "STILL IN ORBIT.", "bl", "log"),
     (5170, 5350, "10 FEBRUARY 1992   ·   ORBIT 92,0__   ·   ALTITUDE 120 KM", "bl", "log"),
@@ -141,3 +140,16 @@ MOTES = [
     (6500, 6600, 13, 30, (1.0, 0.8, 0.5), None),           # J3: dust in the warm light from the opened door
     (6601, 6840, 14, 18, (0.75, 0.95, 0.7), None),         # K1: the ending, both on the roof
 ]
+
+# who is where: manga caption boxes on each side of the split (start, end, left, right)
+LABELS = [
+    (112, 288, "THE SON", "THE FATHER"),
+    (1266, 1344, "HYDERABAD · THE SON", "ABU DHABI · THE FATHER"),
+    (1345, 1440, "HYDERABAD · THE SON", "ABU DHABI · THE FATHER"),
+    (2401, 4560, "HYDERABAD · THE SON", "ABU DHABI · THE FATHER"),
+    (5161, 5352, "HYDERABAD · THE SON, 1992", "THE FATHER"),
+    (5713, 5880, "THE SON", "THE FATHER"),
+]
+
+# hand-drawn look switches
+STYLE = {"ink": True, "boil": True, "paper": True}

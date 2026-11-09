@@ -264,7 +264,7 @@ class Face:
                     fns["look_y"] = lambda i, p, H=H, cl=clampz: Vector((0, 0, cl(p.x, p.z + 0.20 * H) - p.z))
                     fns["look_down"] = lambda i, p, H=H, cl=clampz: Vector((0, 0, cl(p.x, p.z - 0.22 * H) - p.z))
                 if part == "tear":
-                    fns["tears"] = lambda i, p, bot=bot, tz=self._tear_z: Vector((0, 0, tz[side][i] - p.z))
+                    fns["tears"] = lambda i, p, tz=self._tear_z, sd=side: tz[sd][i] - p
                 kbs = self._add_keys(ob, M, fns)
                 for k, kb in kbs.items():
                     if k in self.kb:
@@ -349,12 +349,14 @@ class Face:
         # nudge toward the camera so it sits over the iris, then collapse the basis onto the lower edge
         n = (self.rig.matrix_world.inverted().to_3x3() @ Vector((0, -1, 0))).normalized() * 0
         Minv = M.inverted()
+        # BASIS = every vertex on ONE point (truly zero area: invisible when tears = 0). Collapsing per-x onto the
+        # curved lid line left thin slivers - a permanent wet lower lid that made everyone look like crying.
+        pt = Vector((c.x, c.y - 0.0007, bot(c.x) - 0.02 * H))
         target = []
         for i, p in enumerate(P):
             zb = bot(p.x)
-            target.append(zb + max(0.0, p.z - zb) * 0.30 - 0.02 * H)
-            p2 = Vector((p.x, p.y - 0.0007, zb - 0.02 * H))
-            me.vertices[i].co = Minv @ p2
+            target.append(Vector((p.x, p.y - 0.0007, zb + max(0.0, p.z - zb) * 0.30 - 0.02 * H)))
+            me.vertices[i].co = Minv @ pt
         self._tear_z[side] = target
         self.p[f"eye_tear{side}"] = ob
         return ob
