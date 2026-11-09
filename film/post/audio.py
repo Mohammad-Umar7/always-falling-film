@@ -571,7 +571,7 @@ if SAMPLED:
     CITY = {1: "street_india", 3: "construction", 4: "night_city", 6: "night_city", 12: "night_city"}
 
     def crickets(sec, vol=0.08, seed=0):
-        return _rec("crickets", _syn["crickets"](sec, vol, seed), seed)
+        return _rec("crickets", _syn["crickets"](sec, vol, seed), seed, db=-2.0)   # real crickets are more tonal
 
     def city_hum(sec, vol=0.08, seed=1):
         return _rec(CITY.get(seed, "night_city"), _syn["city_hum"](sec, vol, seed), seed)
@@ -605,7 +605,7 @@ if SAMPLED:
 
     def chain_knock(vol=0.3, seed=11):
         ref = _syn["chain_knock"](vol, seed)
-        y = FX.hit("knock", 2, pre=0.02, length=0.6)
+        y = FX.hit("knock", 2, pre=0.015, length=0.2)        # one rap per hand hit, like the animation
         return FX.match_peak(y, ref, -1.0) if y is not None else ref
 
     def fire_crackle(sec, vol=0.15, seed=9):
