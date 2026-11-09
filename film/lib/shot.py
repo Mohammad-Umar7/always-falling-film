@@ -103,6 +103,10 @@ class Shot:
         if face.REGISTRY:
             acting.apply(self.sid)
             face.bake_all(1, self.n)
+        if os.path.exists(os.path.join(af.ROOT, "v3.flag")):       # V3 life pass: breathing, idle, camera, wind, DOF
+            import life, detail
+            life.apply(self.sid, self.n)
+            detail.apply(self.sid)                                 # V3 set dressing: painted variation, AO, bevels
         print("AF: softened toon ramps", af.soften_toon())
         for ld in bpy.data.lights:                     # crisp cel shadows: no jittered PCF filtering noise
             if hasattr(ld, "shadow_filter_radius"):
