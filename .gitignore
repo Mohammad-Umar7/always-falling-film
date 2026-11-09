@@ -23,3 +23,8 @@ film/renders_prev/
 film/renders_v1/
 film/renders_old/
 !docs/*.jpg
+# local switches and run logs
+film/*.flag
+film/audio/_mix_*.log
+film/tests/*_backup*.py
+film/tests/*_backup*.html
