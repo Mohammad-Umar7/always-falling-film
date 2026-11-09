@@ -27,6 +27,13 @@ poses.key_sequence(fa, [(1, poses.merge(poses.STAND, lean, {"head": (-6, 0, 0)})
                         (104, poses.merge(poses.STAND, lean, {"head": (-4, 22, 0)})), (144, poses.merge(poses.STAND, lean, {"head": (-4, 22, 0)}))], step=3)
 poses.key_sequence(boy, [(1, poses.merge(poses.STAND_LOOK_UP_HIGH)), (70, poses.STAND_LOOK_UP_HIGH),
                          (82, poses.merge(poses.STAND, {"head": (-10, 26, 0)})), (144, poses.merge(poses.STAND, {"head": (-10, 26, 0)}))], step=3)
+# the father's near hand settles on his son's near shoulder as the crane comes down (local 84-100)
+import body
+bpy.context.view_layer.update()
+fp = fa.matrix_world.translation
+side_b = min(("L", "R"), key=lambda sd: (boy.matrix_world @ boy.pose.bones[f"shoulder01.{sd}"].tail - fp).length)
+side_f = min(("L", "R"), key=lambda sd: (fa.matrix_world @ fa.pose.bones[f"shoulder01.{sd}"].tail - boy.matrix_world.translation).length)
+body.reach_bone(fa, side_f, boy, f"shoulder01.{side_b}", [(1, 0.0), (84, 0.0), (100, 1.0), (144, 1.0)])
 pm = af.flat_mat("pigeon_dusk", "#3A2438")
 birds.flock(34, (0, 0, 0), radius=(9, 22), height=(5, 15), frames=144, period=(150, 210), mat=pm, seed=4, scale=1.3)
 S.cam("cam", keys=[(1, (22.0, 24.0, 30.0), (0.0, -1.0, 6.0), 26.0),

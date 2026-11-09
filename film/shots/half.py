@@ -55,6 +55,9 @@ def hands_on_knees(rig, lift=0.055, along=0.22):
         scene_b.ik_arm(rig, side, knee.lerp(hip, along) + Vector((0, 0, lift)))
 
 
+from body import look_track, reach_bone, HEAD_YAW
+
+
 def bone_tail(rig, bone):
     bpy.context.view_layer.update()
     return rig.matrix_world @ rig.pose.bones[bone].tail
@@ -113,7 +116,7 @@ def P_E1L():
     H, r = hyd_night(1976, ["BOY_75"], moon_dir=(0.6, 0.2, 0.75))
     boy = r["BOY_75"]
     place(boy, (-1.5, -2.0, 0.06), 90)
-    poses.apply(boy, poses.STAND_LOOK_UP_HIGH, frame=1)
+    look_track(boy, poses.STAND_LOOK_UP_HIGH, 40, 120, 144, 16, -16)
     S.cam("cam", keys=[(1, (-3.6, -2.6, 0.5), (0.5, -1.4, 3.2), 26.0), (144, (-3.5, -2.55, 0.5), (0.5, -1.4, 3.3), 26.0)])
     return S
 
@@ -217,7 +220,11 @@ def P_E3R():
     S = shot.Shot("E3R", 192, *HALF)
     A, fa = auh_night(1976)
     place(fa, (-1.0, -1.2, 6.6), 160)
-    poses.apply(fa, poses.STAND_LOOK_UP_HIGH, frame=1)
+    reach = poses.merge(poses.STAND_LOOK_UP_HIGH, poses._fing("R", 6, 4),
+                        {"upperarm01.R": (45, 0, -70), "upperarm02.R": (0, 0, 0), "lowerarm01.R": (25, 0, 0)})
+    half_up = poses.blend(poses.STAND_LOOK_UP_HIGH, reach, 0.5)
+    poses.key_sequence(fa, [(1, poses.STAND_LOOK_UP_HIGH), (60, poses.STAND_LOOK_UP_HIGH), (72, half_up), (84, reach),
+                            (150, reach), (166, half_up), (178, poses.STAND_LOOK_UP_HIGH), (192, poses.STAND_LOOK_UP_HIGH)], step=2)
     auh_moon((-0.3, 0.8, 0.5), 18.0)
     S.cam("cam", keys=[(1, (1.4, -2.0, 7.9), (-6.0, 1.0, 9.5), 30.0), (192, (1.35, -2.0, 7.9), (-6.0, 1.0, 9.7), 30.0)])
     return S
@@ -379,7 +386,9 @@ def P_F4L():
     H, r = hyd_night(1979, ["BOY_79"], moon_dir=(0.1, -0.9, 0.42), clouds=True)
     boy = r["BOY_79"]
     place(boy, (0.3, -3.8, 0.06), 0)
-    poses.apply(boy, poses.merge(poses.STAND_LOOK_UP, poses.FIST_R), frame=1)
+    base = poses.merge(poses.STAND_LOOK_UP, poses.FIST_R)
+    point = poses.merge(base, poses.POINT_L, {"upperarm01.L": (60, 0, 55), "lowerarm01.L": (10, 0, 0), "head": (-30, 0, 0)})
+    poses.key_sequence(boy, [(1, base), (56, base), (66, point), (150, point), (162, base), (240, base)], step=2)
     # a real umbrella: 8 scalloped panels on a shallow cone, ribs, a tip and a curved handle
     import bmesh
     umb_m = af.toon_mat("umbrella", "#9A2438", shadow="#4A0E22", light="#D04A5E")
@@ -741,8 +750,8 @@ def P_A2L():
     son, fa = r["SON_92"], r["FATHER_92"]
     place(son, (0.4, 1.0, 0.06), 180)
     place(fa, (-0.9, 1.15, 0.06), 180)
-    poses.apply(son, poses.STAND_LOOK_UP_HIGH, frame=1)
-    poses.apply(fa, poses.STAND_LOOK_UP, frame=1)
+    look_track(son, poses.STAND_LOOK_UP_HIGH, 54, 154, 432, 14, -14)
+    look_track(fa, poses.STAND_LOOK_UP, 58, 158, 432, 14, -14)
     suitcase_at(Vector((-1.45, 1.15, 0.28)))
     S.cam("cam", keys=[(1, (0.75, -0.6, 1.05), (0.25, 6.0, 3.8), 34.0), (432, (0.74, -0.65, 1.05), (0.25, 6.0, 4.0), 34.0)])
     return S
@@ -754,8 +763,8 @@ def P_A2R():
     son, fa = r["SON_92"], r["FATHER_92"]
     place(son, (0.4, 1.0, 0.06), 180)
     place(fa, (-0.9, 1.15, 0.06), 180)
-    poses.apply(son, poses.STAND_LOOK_UP_HIGH, frame=1)
-    poses.apply(fa, poses.STAND_LOOK_UP, frame=1)
+    look_track(son, poses.STAND_LOOK_UP_HIGH, 54, 154, 432, 14, -14)
+    look_track(fa, poses.STAND_LOOK_UP, 58, 158, 432, 14, -14)
     suitcase_at(Vector((-1.45, 1.15, 0.28)))
     S.cam("cam", keys=[(1, (-1.25, -0.55, 1.05), (-0.75, 6.0, 3.7), 34.0), (432, (-1.24, -0.6, 1.05), (-0.75, 6.0, 3.9), 34.0)])
     return S
@@ -767,8 +776,11 @@ def P_K1W():
     son, fa = r["SON_92"], r["FATHER_92"]
     place(son, (0.4, 1.0, 0.06), 180)
     place(fa, (-0.9, 1.15, 0.06), 180)
-    poses.apply(son, poses.STAND_LOOK_UP_HIGH, frame=1)
-    poses.apply(fa, poses.STAND_LOOK_UP, frame=1)
+    up_s, up_f = poses.STAND_LOOK_UP_HIGH, poses.STAND_LOOK_UP
+    to_f = poses.merge(poses.STAND, {"head": (-8, 30 * HEAD_YAW, 0), "neck02": (-4, 10 * HEAD_YAW, 0)})      # son turns to his left
+    to_s = poses.merge(poses.STAND, {"head": (-6, -30 * HEAD_YAW, 0), "neck02": (-3, -10 * HEAD_YAW, 0)})    # father turns to his right
+    poses.key_sequence(son, [(1, up_s), (122, up_s), (136, to_f), (240, to_f)], step=2)
+    poses.key_sequence(fa, [(1, up_f), (128, up_f), (142, to_s), (240, to_s)], step=2)
     suitcase_at(Vector((-1.45, 1.15, 0.28)))
     S.cam("cam", keys=[(1, (-0.25, -0.9, 1.1), (-0.25, 6.0, 3.8), 34.0), (240, (-0.3, -3.0, 2.0), (-6.0, 60.0, 8.0), 28.0)])
     return S
@@ -781,7 +793,16 @@ def P_C1F():
     rigs = poses.load_chars(["BOY_75", "FATHER_75_WORK"])
     boy, fa = rigs["BOY_75"], rigs["FATHER_75_WORK"]
     place(boy, (1.4, -6.1, sets_hyd.LANE_Z), 90)
-    poses.apply(boy, poses.merge(poses.STAND, {"head": (-4, 0, 0)}), frame=1)
+    stand_b = poses.merge(poses.STAND, {"head": (-4, 0, 0)})
+    wave_a = poses.merge(stand_b, poses._fing("R", 4, 2), {"upperarm01.R": (20, 0, -100), "lowerarm01.R": (35, 0, 0), "lowerarm02.R": (0, 0, 0)})
+    wave_b = poses.merge(wave_a, {"lowerarm01.R": (35, 0, 28)})
+    seq = [(1, stand_b), (30, stand_b), (38, wave_a)]
+    f = 38
+    for k in range(6):                      # six wave strokes, on twos-threes
+        f += 6
+        seq.append((f, wave_b if k % 2 == 0 else wave_a))
+    seq += [(f + 14, wave_a), (f + 26, stand_b), (144, stand_b)]
+    poses.key_sequence(boy, seq, step=2)
     # father walks away down the lane (+x), suitcase in his right hand, stepped walk
     walk = []
     for i, f in enumerate(range(1, 145, 6)):

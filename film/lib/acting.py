@@ -50,7 +50,8 @@ SHEET = {
     "E1R": {"FATHER_75_WORK": ([(1, m(look_y=-0.7, smile=0.25)), (70, m(look_y=-0.7, smile=0.45, squint=0.2))], [])},
     "E2R": {"FATHER_75_WORK": ([(1, m(smile=0.3, look_y=-0.4))], [])},
     "E3L": {"BOY_75": ([(1, "wonder"), (92, m(UP, smile=0.85, squint=0.5, brow_up=0.3)), (160, m(UP, smile=0.55, squint=0.3))], [])},
-    "E3R": {"FATHER_75_WORK": ([(1, m(UP, smile=0.3)), (80, m(UP, smile=0.45, squint=0.2))], [])},
+    "E3R": {"FATHER_75_WORK": ([(1, m(UP, smile=0.3)), (72, m(UP, smile=0.5, squint=0.25, brow_up=0.3, sparkle=0.7)),
+                                (150, m(UP, smile=0.45, squint=0.2))], [])},
     # --- the years
     "F1L": {"BOY_79": ([(1, m(brow_down=0.25, look_y=-0.6)), (100, m(UP, brow_up=0.4, wide=0.25, sparkle=1.0)),
                         (116, m(UP, smile=0.6, squint=0.3, brow_up=0.25, sparkle=0.8)), (160, m(look_y=-0.6, brow_down=0.15, smile=0.2))], [])},
@@ -61,7 +62,8 @@ SHEET = {
     "F2R": {"FATHER_75_WORK": ([(1, m(smile=0.3, look_y=-0.3)), (50, m(smile=0.45, squint=0.2, look_y=-0.3)),
                                 (185, m(smile=0.3, brow_sad=0.3, look_y=-0.4)), (225, m(smile=0.2, brow_sad=0.3, look_y=-0.5))],
                                [("F2", 3170 - 3121 + 1)])},
-    "F4L": {"BOY_79": ([(1, m(UP, brow_up=0.2))], [])},
+    "F4L": {"BOY_79": ([(1, m(UP, brow_up=0.2)), (60, m(UP, smile=0.85, squint=0.45, brow_up=0.35, sparkle=1.0, open=0.12)),
+                        (150, m(UP, smile=0.55, squint=0.3))], [])},
     "F4R": {"FATHER_75_WORK": ([(1, m(UP, brow_up=0.15))], [])},
     "F5L": {"BOY_81": ([(1, m(look_y=-0.3, brow_up=0.15)), (64, m(smile=0.22, look_y=-0.3)), (190, m(brow_sad=0.35, look_y=-0.5, frown=0.15))], [])},
     # worn out after the shift, he rests on his bunk with his eyes closed
@@ -90,7 +92,9 @@ SHEET = {
                       [("J2", 6360 - 6313 + 1)], [("R", 98)])},
     "J3": {"FATHER_92": ([(1, m(brow_sad=0.35, frown=0.15)), (84, m(brow_up=0.45, wide=0.3, open=0.1)),
                           (104, m(brow_sad=0.6, lid_sad=0.25, tears=0.7, smile=0.5, squint=0.2))], [], [("R", 104)])},
-    "K1W": {"SON_92": ([(1, m(UP, smile=0.5, squint=0.2))], []), "FATHER_92": ([(1, m(UP, smile=0.55, squint=0.25))], [])},
+    "K1W": {"SON_92": ([(1, m(UP, smile=0.5, squint=0.2)), (134, m(look_x=0.6, smile=0.7, squint=0.35, brow_up=0.15))], []),
+            "FATHER_92": ([(1, m(UP, smile=0.55, squint=0.25)), (140, m(look_x=-0.6, smile=0.7, squint=0.4))], [])},
+    "C1F": {"BOY_75": ([(1, m(brow_sad=0.3, look_x=0.4)), (36, m(brow_sad=0.45, smile=0.3, look_x=0.5))], [])},
     "A2L": {"SON_92": ([(1, m(UP, smile=0.35))], []), "FATHER_92": ([(1, m(UP, smile=0.45, squint=0.2))], [])},
     "A2R": {"SON_92": ([(1, m(UP, smile=0.35))], []), "FATHER_92": ([(1, m(UP, smile=0.45, squint=0.2))], [])},
 }
