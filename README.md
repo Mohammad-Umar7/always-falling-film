@@ -82,3 +82,7 @@ poetic licence.
   line-boil wobble removed, and an ending you can follow: All India Radio announcing Aryabhata's return, the father
   shown home in the lane, a readable reveal from the lane up to the roof, "Beta... I'm home", and the promise
   paid off: "Every night... I looked up." / "So did I, Abba."
+- **V4:** after "it still feels like a picture moving", "more drawing", "more impact frames": parallax camera moves on
+  every shot (ray-cast against the set and checked so no character leaves the frame), voice-driven head and hand
+  gestures for whoever speaks, the father's walk home up the lane, kites over the Old City, anime line art traced
+  from every frame, painted wide shots (Kuwahara), impact frames on every big beat, meteors, and a reframed reveal.
