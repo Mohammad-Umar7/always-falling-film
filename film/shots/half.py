@@ -779,14 +779,20 @@ def P_K1W():
     S = shot.Shot("K1W", 240, *FULL)
     H, r = roof92(["SON_92", "FATHER_92"], moon_dir=(0.2, 0.75, 0.62))
     son, fa = r["SON_92"], r["FATHER_92"]
-    place(son, (0.4, 1.0, 0.06), 180)
-    place(fa, (-0.9, 1.15, 0.06), 180)
+    place(son, (-0.02, 1.0, 0.06), 180)             # the father half a step behind his son's shoulder,
+    place(fa, (-0.42, 1.14, 0.06), 180)             # so the hand settles on it with a bent elbow
     up_s, up_f = poses.STAND_LOOK_UP_HIGH, poses.STAND_LOOK_UP
     to_f = poses.merge(poses.STAND, {"head": (-8, 30 * HEAD_YAW, 0), "neck02": (-4, 10 * HEAD_YAW, 0)})      # son turns to his left
     to_s = poses.merge(poses.STAND, {"head": (-6, -30 * HEAD_YAW, 0), "neck02": (-3, -10 * HEAD_YAW, 0)})    # father turns to his right
     poses.key_sequence(son, [(1, up_s), (122, up_s), (136, to_f), (240, to_f)], step=2)
     poses.key_sequence(fa, [(1, up_f), (128, up_f), (142, to_s), (240, to_s)], step=2)
-    suitcase_at(Vector((-1.45, 1.15, 0.28)))
+    suitcase_at(Vector((-1.0, 1.15, 0.28)))
+    # 1975 rhymes with 1992: as in B1 at dusk, the father's hand settles on his son's shoulder (after they turn)
+    import body
+    bpy.context.view_layer.update()
+    side_b = min(("L", "R"), key=lambda sd: (son.matrix_world @ son.pose.bones[f"shoulder01.{sd}"].tail - fa.matrix_world.translation).length)
+    side_f = min(("L", "R"), key=lambda sd: (fa.matrix_world @ fa.pose.bones[f"shoulder01.{sd}"].tail - son.matrix_world.translation).length)
+    body.reach_bone(fa, side_f, son, f"shoulder01.{side_b}", [(1, 0.0), (148, 0.0), (168, 1.0), (240, 1.0)])
     S.cam("cam", keys=[(1, (-0.25, -0.9, 1.1), (-0.25, 6.0, 3.8), 34.0), (240, (-0.3, -3.0, 2.0), (-6.0, 60.0, 8.0), 28.0)])
     return S
 
