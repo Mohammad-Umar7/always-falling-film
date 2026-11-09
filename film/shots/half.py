@@ -693,8 +693,9 @@ def P_I4W():
     # from the lane, just behind the father's shoulder: he looks up at his son leaning over the parapet above
     # (found by ray casting, tests/cam_search.py: both faces unoccluded, 22 degrees apart)
     # screen-up runs from the father to the son, so the frame stands upright: son at the top, father at the bottom
-    S.cam_up("cam", [(1, (2.0, -7.25, sets_hyd.LANE_Z + 0.54), (0.73, -5.675, -1.285), 34.0),
-                     (240, (1.98, -7.22, sets_hyd.LANE_Z + 0.58), (0.73, -5.675, -1.285), 37.0)], up=(-0.2, 1.3, 6.38))
+    # aimed 65/35 toward the son so he reads (V3 had him a speck at the edge); the father's head is the foreground shape
+    S.cam_up("cam", [(1, (2.0, -7.25, sets_hyd.LANE_Z + 0.54), (0.755, -5.501, -0.257), 46.0),
+                     (240, (1.98, -7.22, sets_hyd.LANE_Z + 0.58), (0.755, -5.501, -0.257), 50.0)], up=(-0.2, 1.3, 6.38))
     return S
 
 
