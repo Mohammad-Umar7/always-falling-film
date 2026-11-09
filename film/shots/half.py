@@ -472,6 +472,26 @@ def P_F5R():
     if af.v4():                 # V4: the speaker moves with the words
         import body
         body.speech_gesture(fa, "F5", 60, 240, head=(5.6, 2.0), arm=("lowerarm01.L", 8.4))
+    if af.v6():
+        # V6: after his own voice says "look after Ammi" he lifts a hand and rubs his eyes - tired, or more than tired
+        bpy.context.view_layer.update()
+        ph = fa.pose.bones["head"]
+        eye = fa.matrix_world @ ph.head.lerp(ph.tail, 0.5)
+        fwd = (fa.matrix_world.to_3x3() @ Vector((0, -1, 0))).normalized()
+        knee_ik = fa.pose.bones["lowerarm02.R"].constraints[-1]
+        e = scene_b.ik_arm(fa, "R", eye + fwd * 0.10 + Vector((0, 0, -0.10)))
+        rub = fa.pose.bones["lowerarm02.R"].constraints[-1]
+        for f, v in ((1, 0.0), (176, 0.0), (190, 1.0), (240, 1.0)):
+            rub.influence = v
+            rub.keyframe_insert("influence", frame=f)
+            knee_ik.influence = 1.0 - v
+            knee_ik.keyframe_insert("influence", frame=f)
+        base = Vector(e.location)
+        side = fwd.cross(Vector((0, 0, 1))).normalized()
+        for k, f in enumerate(range(190, 241, 6)):
+            e.location = base + side * (0.025 if k % 2 else -0.025)
+            e.keyframe_insert("location", frame=f)
+        print("AF: F5R eye rub", tuple(round(c, 2) for c in eye), "fwd", tuple(round(c, 2) for c in fwd))
     return S
 
 
