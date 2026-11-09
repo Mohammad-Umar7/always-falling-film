@@ -31,6 +31,11 @@ class Shot:
         self.w, self.h = w, h
         self.A = args()
         af.clear_scene()
+        # close-ups get more TAA samples: lit cel areas near a band threshold dither at 16 samples
+        HQ = {"J2", "J1", "J3", "I3L", "I3R", "I1L", "I1R", "G1L", "F1L", "F5L", "F5R", "E1R", "E2R", "B4a", "B4b", "F2L", "F2R"}
+        if sid in HQ:
+            samples = max(samples, 48)
+        samples = int(os.environ.get("AF_SAMPLES", samples))
         self.sc = af.setup_scene(w=w, h=h, samples=samples, f0=1, f1=frames)
         self.sc.frame_set(1)
 
@@ -99,6 +104,13 @@ class Shot:
             acting.apply(self.sid)
             face.bake_all(1, self.n)
         print("AF: softened toon ramps", af.soften_toon())
+        for ld in bpy.data.lights:                     # crisp cel shadows: no jittered PCF filtering noise
+            if hasattr(ld, "shadow_filter_radius"):
+                ld.shadow_filter_radius = 0.0
+            if ld.type in ("POINT", "SPOT", "AREA"):
+                ld.shadow_soft_size = 0.0             # jittered soft shadows were the speckle in lit areas
+            elif ld.type == "SUN":
+                ld.angle = min(ld.angle, 0.0035)
         af.compositor(bloom=bloom, streaks=streaks, dispersion=dispersion, kuwahara=kuwahara)
         out_dir = os.path.join(RENDERS, self.sid)
         os.makedirs(out_dir, exist_ok=True)

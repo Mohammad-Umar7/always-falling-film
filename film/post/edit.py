@@ -112,10 +112,13 @@ def grade(img, kind):
         img = saturate(img, 1.3)
         img = contrast(img, 1.1, 0.4)
     elif kind == "warm":
+        # sodium-vapour Gulf night: warm white balance, amber highlights, violet shadows - hues kept (no brown wash)
         l = lum(img)[..., None]
-        amber = l * np.array([1.35, 0.92, 0.55], np.float32) + np.array([0.05, 0.02, 0.0], np.float32)
-        img = img * 0.45 + amber * 0.55
-        img = saturate(img, 1.25)
+        img = img * np.array([1.2, 0.98, 0.78], np.float32)
+        hl = np.clip(l * 2.2 - 0.25, 0, 1)
+        img = img + hl * np.array([0.07, 0.035, -0.02], np.float32) + (1 - hl) * np.array([0.035, 0.0, 0.04], np.float32)
+        img = saturate(img, 1.35)
+        img = contrast(img, 1.06)
     elif kind == "cool":
         img = saturate(img, 1.28)
         img = img + np.array([-0.01, 0.01, 0.04], np.float32)
@@ -313,6 +316,61 @@ def fit_panel(img, cx_frac=0.5):
     sl = cv2.resize(img[:, x0:x0 + sw], (int(sw * H / h), H))
     canvas = np.zeros((H, W, 3), np.float32)
     return sl, canvas
+
+
+def god_rays(img, strength=0.55, thr=0.82, steps=10, decay=0.86):
+    """Shinkai-style crepuscular rays: zoom-blur the brightest region (the sun) outward from its own centre"""
+    h, w = img.shape[:2]
+    small = cv2.resize(img, (w // 4, h // 4), interpolation=cv2.INTER_AREA)
+    l = lum(small)
+    if l.max() < thr:
+        return img
+    y, x = np.unravel_index(np.argmax(cv2.GaussianBlur(l, (0, 0), 6)), l.shape)
+    mask = np.clip((l - thr) / (1 - thr), 0, 1)[..., None] * small
+    acc = np.zeros_like(mask)
+    wgt, sc = 1.0, 1.0
+    for _ in range(steps):
+        M = np.float32([[sc, 0, x * (1 - sc)], [0, sc, y * (1 - sc)]])
+        acc += cv2.warpAffine(mask, M, (w // 4, h // 4), borderMode=cv2.BORDER_CONSTANT) * wgt
+        wgt *= decay
+        sc *= 1.07
+    acc = cv2.resize(cv2.GaussianBlur(acc, (0, 0), 2), (w, h), interpolation=cv2.INTER_LINEAR)
+    return img + acc * (strength / steps * 3.0) * np.array([1.0, 0.86, 0.66], np.float32)
+
+
+def anamorphic(img, thr=0.9, strength=0.35, length=0.35):
+    """horizontal anamorphic flare streaks on the hottest highlights (sun, moon, fireball, lamps)"""
+    h, w = img.shape[:2]
+    small = cv2.resize(img, (w // 4, h // 4), interpolation=cv2.INTER_AREA)
+    l = lum(small)
+    m = np.clip((l - thr) / (1 - thr), 0, 1)
+    if m.max() <= 0:
+        return img
+    k = int(w // 4 * length) | 1
+    streak = cv2.blur(m, (k, 1))
+    streak = cv2.blur(streak, (k // 3 | 1, 1))
+    streak = cv2.resize(streak, (w, h), interpolation=cv2.INTER_LINEAR)[..., None]
+    return img + streak * strength * np.array([0.55, 0.75, 1.0], np.float32)
+
+
+def motes(img, f, seed, n=26, color=(1.0, 0.86, 0.6), size=(2.0, 5.0), drift=(0.25, -0.35), alpha=0.55, region=None):
+    """floating glowing motes (fireflies / dust in light), deterministic and drifting, soft bokeh"""
+    h, w = img.shape[:2]
+    x0, x1 = region if region else (0, w)
+    rng = random.Random(seed)
+    ov = np.zeros((h // 2, w // 2), np.float32)
+    for i in range(n):
+        bx, by = rng.uniform(x0, x1), rng.uniform(0, h)
+        sp = rng.uniform(0.4, 1.2)
+        ph = rng.uniform(0, 6.28)
+        x = (bx + f * drift[0] * sp * 2 + 18 * math.sin(f * 0.03 * sp + ph)) % (x1 - x0) + x0
+        y = (by + f * drift[1] * sp * 2 + 10 * math.cos(f * 0.025 * sp + ph)) % h
+        r = rng.uniform(*size) / 2
+        tw = 0.55 + 0.45 * math.sin(f * 0.12 * sp + ph)
+        cv2.circle(ov, (int(x / 2), int(y / 2)), max(1, int(r)), tw * rng.uniform(0.5, 1.0), -1, cv2.LINE_AA)
+    ov = cv2.GaussianBlur(ov, (0, 0), 1.6)
+    ov = cv2.resize(ov, (w, h), interpolation=cv2.INTER_LINEAR)[..., None]
+    return img + ov * alpha * np.array(color, np.float32)
 
 
 def dot_pos(t, x0=240, x1=1680, y=150):
@@ -634,6 +692,14 @@ def make_frame(f):
     for c_ in TL.SWEEPS:
         if c_ <= f < c_ + 10:
             img = light_sweep(img, (f - c_) / 10.0, 0.5)
+    for (a_, b_, seed_, n_, col_, reg_) in TL.MOTES:
+        if a_ <= f <= b_:
+            fade_ = min(1.0, (f - a_) / 24.0, (b_ - f) / 24.0)
+            img = motes(img, f, seed_, n_, col_, alpha=0.55 * fade_, region=reg_)
+    if g == "dusk":
+        img = god_rays(img, 0.75)
+    if g in ("dusk", "space", "fire") or sid in ("I3", "I4", "J3", "C1"):
+        img = anamorphic(img, 0.88, 0.3 if g != "fire" else 0.22)
     if ex.get("rain_left"):
         img = rain(img, f)
     if ex.get("haze_right"):

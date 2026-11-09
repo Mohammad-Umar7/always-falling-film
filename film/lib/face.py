@@ -448,7 +448,8 @@ class Face:
         cav = bpy.context.active_object
         cav.name = pre + "_mouthcav"
         cav.data.materials.append(dark)
-        rx, ry, rz = mw * 0.36, 0.011 * mw / 0.0548, (up.z - lo.z) * 0.62
+        rx, ry, rz = mw * 0.29, 0.010 * mw / 0.0548, (up.z - lo.z) * 0.58
+        cy = (Lc.y + Rc.y) / 2 + ry + 0.0025          # its front stays behind the mouth corners (no dark patches on cheeks)
         cav.matrix_world = self.rig.matrix_world @ Matrix.Translation(Vector((cx, cy, zc - 0.15 * (up.z - lo.z)))) @ Matrix.Diagonal((rx, ry, rz, 1))
         objs.append(cav)
         bpy.ops.mesh.primitive_cube_add(size=1.0)

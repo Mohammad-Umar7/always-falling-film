@@ -39,8 +39,9 @@ rx.scale_keys(ball, [(1, 0.001), (70, 0.5), (100, 1.3), (120, 1.8)])
 rx.scale_keys(body, [(1, 1.0), (80, 0.85), (110, 0.25), (120, 0.01)])
 glow = af.add_point("plasma_light", (0, -0.8, 0), "#FFB06A", energy=1200.0, radius=0.6, shadow=False)
 rx.sparks("spk", 160, 1, 120, flow=(0, 1, 0), spread=1.4, speed=(2.0, 6.0), seed=5)
-cam = S.cam("cam", keys=[(1, (3.6, -3.4, 0.8), (0.0, 1.2, -0.1), 26.0), (60, (3.0, -2.8, 0.7), (0.0, 1.4, -0.1), 24.0),
-                         (120, (4.4, -4.4, 1.1), (0.0, 1.6, -0.1), 26.0)])
+# 3/4 side view: bow shock in front, plasma and debris streaming behind (head-on it read as a portal ring)
+cam = S.cam("cam", keys=[(1, (5.6, -1.4, 1.5), (0.0, 1.8, -0.3), 28.0), (60, (5.0, -1.0, 1.3), (0.0, 2.0, -0.3), 26.0),
+                         (120, (6.4, -2.0, 1.9), (0.0, 2.2, -0.3), 28.0)])
 S.shake(cam, 1, 120, strength=0.03, scale=0.9)
 sc = bpy.context.scene
 sc.render.use_motion_blur = True

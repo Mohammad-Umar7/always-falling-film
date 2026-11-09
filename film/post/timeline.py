@@ -133,3 +133,11 @@ FOCUS = [
     (6121, 6136, 960, 520, 0.55, (0.02, 0.02, 0.08)),  # J1: the son finds his father in the lane
 ]
 SWEEPS = [2401, 2545, 2689, 2881, 3121, 3361, 3601, 3841]
+
+# floating light motes: (start, end, seed, count, colour, x-range or None)
+MOTES = [
+    (505, 1200, 11, 22, (0.75, 0.95, 0.7), None),          # rooftop promise: a few fireflies
+    (2689, 2880, 12, 12, (0.75, 0.95, 0.7), (0, 960)),     # E3: the boy holds the note to the sky
+    (6500, 6600, 13, 30, (1.0, 0.8, 0.5), None),           # J3: dust in the warm light from the opened door
+    (6601, 6840, 14, 18, (0.75, 0.95, 0.7), None),         # K1: the ending, both on the roof
+]

@@ -646,7 +646,7 @@ def P_J1():
     mid = poses.merge(poses.STAND, poses.HOLD_SUITCASE_R, poses.LOOK_UP)
     poses.key_sequence(fa, [(1, up), (60, up), (90, mid), (192, mid)], step=3)
     suitcase_at(bone_tail(fa, "lowerarm02.R"))
-    S.cam("cam", keys=[(1, (1.35, -5.65, 1.55), (1.5, -6.62, sets_hyd.LANE_Z + 1.4), 88.0), (192, (1.35, -5.68, 1.5), (1.5, -6.62, sets_hyd.LANE_Z + 1.45), 105.0)])
+    S.cam("cam", keys=[(1, (1.35, -5.65, 1.55), (1.5, -6.62, sets_hyd.LANE_Z + 1.4), 135.0), (192, (1.35, -5.68, 1.5), (1.5, -6.62, sets_hyd.LANE_Z + 1.45), 165.0)])
     return S
 
 
@@ -683,11 +683,27 @@ def P_J3():
             hinge.keyframe_insert("rotation_euler", frame=70)
             hinge.rotation_euler = (0, 0, math.radians(-78))
             hinge.keyframe_insert("rotation_euler", frame=100)
-    warm = af.add_point("door_warm", (1.6, -5.62, sets_hyd.LANE_Z + 1.5), "#FFB46A", energy=0.0, radius=0.4)
+    # the set's doorframe is one solid block that swallows the leaves: replace it with jambs + lintel for this shot
+    fr = bpy.data.objects.get("hero_doorframe")
+    if fr is not None:
+        fm = fr.data.materials[0] if fr.data.materials else None
+        fr.hide_render = True
+        fr.hide_viewport = True
+        for nm, size, loc in (("jambL", (0.16, 0.26, 2.5), (0.68, -5.55, sets_hyd.LANE_Z + 1.25)),
+                              ("jambR", (0.16, 0.26, 2.5), (2.12, -5.55, sets_hyd.LANE_Z + 1.25)),
+                              ("lintel", (1.6, 0.26, 0.2), (1.4, -5.55, sets_hyd.LANE_Z + 2.4))):
+            j = af.box("door_" + nm, size, loc, fm)
+            af.add_outline(j, 0.008, "#0A0608")
+    # the lit room behind the door (the house is a solid block): a warm glowing doorway + a light just in front of it
+    glow_m = af.flat_mat("door_glow", "#FFC890", strength=1.6)
+    af.plane("door_glow", 1.3, 2.25, (1.4, -5.555, sets_hyd.LANE_Z + 1.12), (math.radians(90), 0, 0), glow_m)
+    warm = af.add_point("door_warm", (1.62, -5.575, sets_hyd.LANE_Z + 1.7), "#FFB46A", energy=0.0, radius=0.0)
     warm.data.keyframe_insert("energy", frame=72)
-    warm.data.energy = 900.0
+    warm.data.energy = 320.0
     warm.data.keyframe_insert("energy", frame=104)
-    S.cam("cam", keys=[(1, (0.25, -5.92, sets_hyd.LANE_Z + 1.6), (1.45, -6.12, sets_hyd.LANE_Z + 1.45), 30.0), (120, (0.3, -5.93, sets_hyd.LANE_Z + 1.6), (1.45, -6.12, sets_hyd.LANE_Z + 1.5), 32.0)])
+    # over his right shoulder, onto the door: it swings open and the warm light falls on him
+    S.cam("cam", keys=[(1, (2.75, -7.45, sets_hyd.LANE_Z + 1.5), (1.35, -5.7, sets_hyd.LANE_Z + 1.3), 32.0),
+                       (120, (2.65, -7.35, sets_hyd.LANE_Z + 1.5), (1.35, -5.7, sets_hyd.LANE_Z + 1.32), 35.0)])
     return S
 
 
