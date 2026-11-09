@@ -628,6 +628,28 @@ if SAMPLED:
         return FX.match_peak(y, ref) if y is not None else ref
 
 
+if SAMPLED:
+    _TANPURA = {}
+
+    def tanpura(t0, t1, vol=0.12, pan=0.0):
+        """a recorded tambura (Kaczinski, CC0; in E-flat, tuned down a semitone to the score's D) instead of the synth"""
+        if "rms" not in _TANPURA:
+            _TANPURA["rms"] = FX.rms(tanpura_cycle())
+        n = int((t1 - t0) * SR)
+        r = 2 ** (1 / 12)
+        src = FX.bed("tanpura", int(n / r) + 8, seed=int(t0 * 10), idx=0)
+        if src is None:
+            t = t0
+            while t < t1:
+                put(tanpura_cycle(), t, vol, pan, fade=0.02)
+                t += 6.4
+            return
+        idx = np.arange(n) / r
+        y = np.stack([np.interp(idx, np.arange(len(src)), src[:, c]) for c in range(2)], -1).astype(np.float32)
+        y = y * (_TANPURA["rms"] / (FX.rms(y) + 1e-9))
+        put(y, t0, vol, pan, fade=1.2)
+
+
 def v3_layers():
     """recorded layers that had no synth counterpart"""
     if not SAMPLED:
