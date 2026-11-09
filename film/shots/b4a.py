@@ -14,5 +14,8 @@ up_f = poses.merge(poses.LIE, {"head": (-6, 2, 0)})
 to_b = poses.merge(poses.LIE, {"head": (-2, -32, 0)})
 poses.key_sequence(boy, [(1, up_b), (14, up_b), (26, to_fa), (96, to_fa)], step=2)
 poses.key_sequence(fa, [(1, up_f), (40, up_f), (54, to_b), (96, to_b)], step=2)
+if af.v4():                     # V4: his explanation runs on into this shot (B3's clip started at timeline 705)
+    import body
+    body.speech_gesture(fa, "B3", 705 - 889 + 1, 96, head=(5.6, 2.0))
 S.cam_up("cam", [(1, (0.42, -0.08, 1.80), (0.42, -0.08, 0.6), 40.0), (96, (0.42, -0.08, 1.68), (0.42, -0.08, 0.6), 40.0)], up=(0, -1, 0))
 S.finish(step=1)
