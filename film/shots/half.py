@@ -320,6 +320,9 @@ def P_F2R():
         eh.keyframe_insert("location", frame=f)
     af.set_interp(eh, "CONSTANT")
     S.cam("cam", keys=[(1, (1.45, 1.02, 1.28), (0.84, 0.62, 0.98), 32.0), (240, (1.43, 1.02, 1.26), (0.84, 0.64, 0.97), 34.0)])
+    if af.v4():                 # V4: the speaker moves with the words
+        import body
+        body.speech_gesture(fa, "F2", 50, 240, head=(7.0, 3.2), arm=("lowerarm01.L", 14.0))
     return S
 
 
@@ -466,6 +469,9 @@ def P_F5R():
     seat(fa, 0.69)
     hands_on_knees(fa, lift=0.04, along=0.1)
     S.cam("cam", keys=[(1, (1.3, -1.4, 1.35), (-0.6, 0.4, 0.95), 28.0), (240, (1.25, -1.35, 1.32), (-0.6, 0.4, 0.95), 29.0)])
+    if af.v4():                 # V4: the speaker moves with the words
+        import body
+        body.speech_gesture(fa, "F5", 60, 240, head=(5.6, 2.0), arm=("lowerarm01.L", 8.4))
     return S
 
 
@@ -583,11 +589,35 @@ def P_I1R():
     H, r = roof92(["FATHER_92"])
     fa = r["FATHER_92"]
     place(fa, (1.55, -6.55, sets_hyd.LANE_Z), 180)
-    poses.apply(fa, poses.merge(poses.STAND, poses.HOLD_SUITCASE_R, {"head": (10, 0, 0)}), frame=1)
-    case_m = af.toon_mat("suitcase92", "#4A2E2A", shadow="#221416", light="#6E4440")
-    hand = bone_tail(fa, "lowerarm02.R")
-    case = af.box("suitcase", (0.5, 0.16, 0.38), hand + Vector((0, 0, -0.22)), case_m, bevel=0.02)
-    af.add_outline(case, 0.006, "#0A0608")
+    stand = poses.merge(poses.STAND, poses.HOLD_SUITCASE_R, {"head": (10, 0, 0)})
+    if af.v4():
+        # V4: he walks up the lane from its far end, suitcase in hand, eases to a stop and turns to his own door
+        x0, x1, f_stop, L = -1.6, 1.55, 132, 0.3
+        for i, f in enumerate(range(1, f_stop, 6)):
+            poses.apply(fa, poses.merge(poses.STAND, poses.HOLD_SUITCASE_R, poses.walk_poses(i % 4)), frame=f)
+        poses.apply(fa, stand, frame=f_stop + 4)
+        poses.apply(fa, stand, frame=192)
+        for f in range(1, f_stop + 1, 2):
+            t = (f - 1) / (f_stop - 1)
+            if t <= 1 - L:
+                e = t / (1 - L / 2)
+            else:
+                u = (t - (1 - L)) / L
+                e = ((1 - L) + L * (u - u * u / 2)) / (1 - L / 2)          # same speed in, slows to a stop
+            fa.location = (x0 + (x1 - x0) * e, -6.55, sets_hyd.LANE_Z)
+            fa.keyframe_insert("location", frame=f)
+        for f, yaw in ((1, 90), (f_stop, 90), (f_stop + 14, 180)):
+            fa.rotation_euler = (0, 0, math.radians(yaw))
+            fa.keyframe_insert("rotation_euler", frame=f)
+        bpy.context.scene.frame_set(1)
+        case = suitcase_at(bone_tail(fa, "lowerarm02.R"))
+        attach(case, fa, "lowerarm02.R")
+    else:
+        poses.apply(fa, stand, frame=1)
+        case_m = af.toon_mat("suitcase92", "#4A2E2A", shadow="#221416", light="#6E4440")
+        hand = bone_tail(fa, "lowerarm02.R")
+        case = af.box("suitcase", (0.5, 0.16, 0.38), hand + Vector((0, 0, -0.22)), case_m, bevel=0.02)
+        af.add_outline(case, 0.006, "#0A0608")
     S.cam("cam", keys=[(1, (3.55, -6.0, sets_hyd.LANE_Z + 1.05), (1.4, -6.15, sets_hyd.LANE_Z + 1.25), 24.0),
                        (192, (3.45, -6.02, sets_hyd.LANE_Z + 1.05), (1.4, -6.15, sets_hyd.LANE_Z + 1.3), 26.0)])
     return S
@@ -746,6 +776,9 @@ def P_J3():
     # over his right shoulder, onto the door: it swings open and the warm light falls on him
     S.cam("cam", keys=[(1, (2.75, -7.45, sets_hyd.LANE_Z + 1.5), (1.35, -5.7, sets_hyd.LANE_Z + 1.3), 32.0),
                        (120, (2.65, -7.35, sets_hyd.LANE_Z + 1.5), (1.35, -5.7, sets_hyd.LANE_Z + 1.32), 35.0)])
+    if af.v4():                 # V4: the speaker moves with the words
+        import body
+        body.speech_gesture(fa, "J3", 76, 120, head=(5.6, 2.0))
     return S
 
 
@@ -794,6 +827,10 @@ def P_K1W():
     side_f = min(("L", "R"), key=lambda sd: (fa.matrix_world @ fa.pose.bones[f"shoulder01.{sd}"].tail - son.matrix_world.translation).length)
     body.reach_bone(fa, side_f, son, f"shoulder01.{side_b}", [(1, 0.0), (148, 0.0), (168, 1.0), (240, 1.0)])
     S.cam("cam", keys=[(1, (-0.25, -0.9, 1.1), (-0.25, 6.0, 3.8), 34.0), (240, (-0.3, -3.0, 2.0), (-6.0, 60.0, 8.0), 28.0)])
+    if af.v4():                 # V4: the speaker moves with the words
+        import body
+        body.speech_gesture(fa, "K1a", 50, 240, head=(5.6, 2.0))
+        body.speech_gesture(son, "K1b", 152, 240, head=(5.6, 2.0))
     return S
 
 

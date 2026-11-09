@@ -16,6 +16,9 @@ poses.key_sequence(fa, [(1, pA), (60, pA), (150, pB), (192, pB)], step=2)
 poses.apply(boy, poses.merge(poses.LIE, {"head": (-16, -4, 0)}), frame=1)
 cam_loc = Vector((-0.06, -0.40, 0.82))
 look = Vector((0.15, 0.62, 0.77)).normalized()
+if af.v4():                     # V4: he talks with his head and hand, not just his lips
+    import body
+    body.speech_gesture(fa, "B3", 9, 192, head=(7.0, 2.6), arm=("lowerarm01.L", 7.0))
 S.cam("cam", keys=[(1, tuple(cam_loc), tuple(cam_loc + look * 10), 20.0),
                    (192, tuple(cam_loc + Vector((0, 0.03, 0.02))), tuple(cam_loc + look * 10 + Vector((0, 0, 0.4))), 21.0)])
 center = cam_loc + look * 260

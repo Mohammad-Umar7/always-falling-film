@@ -17,6 +17,9 @@ bpy.context.view_layer.update()
 hf = fa.matrix_world @ fa.pose.bones["head"].tail
 hb = boy.matrix_world @ boy.pose.bones["head"].tail
 mid = (hf + hb) / 2
+if af.v4():                     # V4: he talks with his head and hand, not just his lips
+    import body
+    body.speech_gesture(fa, "B4", 61, 96, head=(5.6, 2.0))
 S.cam("cam", keys=[(1, tuple(mid + Vector((0.05, 0.95, 1.05))), tuple(mid + Vector((0, 0.16, -0.02))), 40.0),
                    (96, tuple(mid + Vector((0.04, 0.84, 0.95))), tuple(mid + Vector((0, 0.14, -0.02))), 42.0)])
 S.finish(step=1)

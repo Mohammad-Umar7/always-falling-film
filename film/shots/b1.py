@@ -36,6 +36,9 @@ side_f = min(("L", "R"), key=lambda sd: (fa.matrix_world @ fa.pose.bones[f"shoul
 body.reach_bone(fa, side_f, boy, f"shoulder01.{side_b}", [(1, 0.0), (84, 0.0), (100, 1.0), (144, 1.0)])
 pm = af.flat_mat("pigeon_dusk", "#3A2438")
 birds.flock(34, (0, 0, 0), radius=(9, 22), height=(5, 15), frames=144, period=(150, 210), mat=pm, seed=4, scale=1.3)
+if af.v4():                     # V4: kites over the Old City, out along the crane's final view toward the low sun
+    import kites
+    kites.fly((2.3, 0.1, 2.5), (-14.3, -11.1, 0.0), n=6, dist=(65.0, 115.0), height=(8.0, 17.0), frames=144, seed=11)
 S.cam("cam", keys=[(1, (22.0, 24.0, 30.0), (0.0, -1.0, 6.0), 26.0),
                    (80, (8.0, 6.0, 9.0), (-6.0, -8.0, 3.0), 28.0),
                    (144, (2.3, 0.1, 2.5), (-12.0, -11.0, -0.2), 28.0)])
