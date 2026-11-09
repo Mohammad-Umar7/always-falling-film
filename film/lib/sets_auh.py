@@ -148,6 +148,18 @@ class Auh:
         parts.append(box(name + "_load", (3.0, 1.0, 0.6), (jib * 0.55 - 8, 0, h - 18.2), m))
         for p in parts:
             p.parent = root
+        if af.v6():
+            # V6: the cranes are working - the jib swings slowly through the shot, the warning light on top blinks
+            rnd = random.Random(af.stable_seed(name, round(x), round(y)))
+            root.keyframe_insert("rotation_euler", index=2, frame=1)
+            root.rotation_euler[2] = rot + rnd.choice((-1, 1)) * rnd.uniform(0.22, 0.45)
+            root.keyframe_insert("rotation_euler", index=2, frame=240)
+            lamp = cylinder(name + "_warn", 0.75, 1.2, (0, 0, h + 7.2), flat_mat(name + "_warn_mat", "#FF3020", strength=7.0), 8)
+            lamp.parent = root
+            ph = rnd.randrange(0, 36)
+            for f in range(1, 242, 2):                       # on twos: lit 12 frames of every 36
+                lamp.hide_render = ((f + ph) % 36) >= 12
+                lamp.keyframe_insert("hide_render", frame=f)
         return root
 
     def fort(self, x, y, s=1.0):
