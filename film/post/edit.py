@@ -66,6 +66,13 @@ def load(sid, f, size=None):
     i = bisect.bisect_right(fs, f) - 1
     n = fs[max(0, i)]
     im = cv2.imread(os.path.join(R, sid, f"{n:04d}.png"), cv2.IMREAD_COLOR)
+    k = max(0, i)
+    while im is None and k > 0:                 # safety net: a corrupt frame falls back to the previous good one
+        k -= 1
+        print(f"WARNING unreadable frame {sid}/{n:04d}.png -> using {fs[k]:04d}", flush=True)
+        im = cv2.imread(os.path.join(R, sid, f"{fs[k]:04d}.png"), cv2.IMREAD_COLOR)
+    if im is None:
+        im = np.zeros((size[1] if size else H, size[0] if size else W, 3), np.uint8)
     im = clean_cel(im) if sid not in NO_CLEAN else cv2.bilateralFilter(im, 7, 24, 5)
     im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB).astype(np.float32) / 255.0
     if size and (im.shape[1], im.shape[0]) != size:
