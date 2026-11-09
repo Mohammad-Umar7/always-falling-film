@@ -1,0 +1,19 @@
+# big binaries stay local
+*.blend
+*.blend1
+*.png
+*.jpg
+*.jpeg
+*.exr
+*.mp4
+*.mov
+*.wav
+*.mp3
+*.ttf
+*.otf
+film/renders/
+film/final/
+film/assets/dl/
+film/audio/raw/
+__pycache__/
+*.pyc
