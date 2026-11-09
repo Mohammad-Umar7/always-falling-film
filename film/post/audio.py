@@ -229,6 +229,9 @@ def bell(note, sec=4.0, vol=0.25):
     return (np.sin(2 * np.pi * f * t + mod) * np.exp(-t * 1.2) * vol).astype(np.float32)
 
 
+_bell_syn = bell          # reverse_swell keeps the FM bell (it is a sound-design swell, not the glockenspiel)
+
+
 def taiko(sec=1.4, vol=0.9, f0=85):
     t = tvec(sec)
     f = f0 * (1 + 1.6 * np.exp(-t * 18))
@@ -264,7 +267,7 @@ def whoosh(sec=1.2, up=True, vol=0.5, lo=300, hi=5300):
 
 def reverse_swell(sec=1.5, vol=0.4, note="D5"):
     """reversed bell + air swell that lands on the next downbeat"""
-    s = bell(note, sec, 1.0) + lowpass(ns(int(sec * SR), "pink"), 4000) * np.exp(-tvec(sec) * 2.5).astype(np.float32) * 0.3
+    s = _bell_syn(note, sec, 1.0) + lowpass(ns(int(sec * SR), "pink"), 4000) * np.exp(-tvec(sec) * 2.5).astype(np.float32) * 0.3
     return s[::-1].copy() * vol
 
 
@@ -501,7 +504,8 @@ if SAMPLED:
 
     def strings(note, sec, vol=0.2, attack=0.7, release=1.4, bright=1.0):
         m = _m(note)
-        y = SM.inst(SM.string_section(m)).note(m, max(0.15, sec - release), amp=SM.CAL["strings"] * vol / 0.2,
+        sec_ = SM.string_section(m)
+        y = SM.inst(sec_).note(m, max(0.15, sec - release), amp=SM.CAL[sec_] * vol / 0.2,
                                                attack=max(0.06, attack), release=max(0.25, release))
         if bright < 0.8:
             y = lowpass(y, 2500 + 4000 * bright)
@@ -512,7 +516,8 @@ if SAMPLED:
         parts = []
         for note in chord:
             m = _m(note)
-            parts.append(SM.inst(SM.string_section(m)).note(m, max(0.3, sec - release), amp=SM.CAL["strings"] * vol / 0.2 / math.sqrt(len(chord)),
+            sec_ = SM.string_section(m)
+            parts.append(SM.inst(sec_).note(m, max(0.3, sec - release), amp=SM.CAL[sec_] * vol / 0.2 / math.sqrt(len(chord)),
                                                             attack=max(0.15, attack), release=max(0.4, release)))
         n = max(len(p) for p in parts)
         out = np.zeros((n, 2), np.float32)
@@ -548,6 +553,111 @@ if SAMPLED:
         x = SM.one_shot("VSCO 1 Percussion/drums/bass/bdrum_fff_1.wav")[: len(y)]
         y[:len(x)] += x * (SM.CAL["boom_drum"] * vol)
         return y
+
+
+# ------------------------------------------------------------------ V3: recorded sound effects (post/sfx.py)
+if SAMPLED:
+    import sfx as FX
+    _syn = {k: globals()[k] for k in ("crickets", "city_hum", "birds", "pigeon_flaps", "footsteps", "clangs", "rain_sfx",
+                                      "creak", "chain_knock", "fire_crackle", "roar", "rumble", "train_horn", "click")}
+
+    def _rec(key, ref, seed=0, db=0.0, idx=None, mono=False):
+        y = FX.bed(key, len(ref), seed, idx)
+        if y is None:
+            return ref
+        y = FX.match(y, ref, db)
+        return y.mean(1).astype(np.float32) if mono else y
+
+    CITY = {1: "street_india", 3: "construction", 4: "night_city", 6: "night_city", 12: "night_city"}
+
+    def crickets(sec, vol=0.08, seed=0):
+        return _rec("crickets", _syn["crickets"](sec, vol, seed), seed)
+
+    def city_hum(sec, vol=0.08, seed=1):
+        return _rec(CITY.get(seed, "night_city"), _syn["city_hum"](sec, vol, seed), seed)
+
+    def birds(sec, n=10, vol=0.05, seed=8):
+        """Hyderabad at dusk: crows and mynas"""
+        return _rec("crows" if seed in (8, 10) else "birds_evening", _syn["birds"](sec, n, vol, seed), seed, db=-1.0)
+
+    def pigeon_flaps(sec, vol=0.2, seed=4):
+        ref = _syn["pigeon_flaps"](sec, vol, seed)
+        coo = _rec("pigeons", ref, seed, db=-5.0)
+        return coo + stereo(ref * 0.5, 0.0) if coo.ndim == 2 else ref
+
+    def footsteps(sec, every=0.5, vol=0.2, fade_to=0.25, seed=5):
+        ref = _syn["footsteps"](sec, every, vol, fade_to, seed)
+        y = _rec("footsteps", ref, seed, idx=1)
+        if y.ndim == 2:
+            y = y * np.linspace(1, fade_to, len(y), dtype=np.float32)[:, None]     # he walks away
+        return y
+
+    def clangs(sec, vol=0.06, seed=3):
+        return _rec("construction", _syn["clangs"](sec, vol, seed), seed, idx=0)
+
+    def rain_sfx(sec, vol=0.2, seed=10):
+        return _rec("rain", _syn["rain_sfx"](sec, vol, seed), seed, idx=0)
+
+    def creak(sec=1.0, vol=0.25):
+        ref = _syn["creak"](sec, vol)
+        y = FX.hit("door_creak", 1, pre=0.05, length=sec)
+        return FX.match_peak(y, ref) if y is not None else ref
+
+    def chain_knock(vol=0.3, seed=11):
+        ref = _syn["chain_knock"](vol, seed)
+        y = FX.hit("knock", 2, pre=0.02, length=0.6)
+        return FX.match_peak(y, ref, -1.0) if y is not None else ref
+
+    def fire_crackle(sec, vol=0.15, seed=9):
+        return _rec("fire_roar", _syn["fire_crackle"](sec, vol, seed), seed, idx=0)
+
+    def roar(sec, vol=0.6, seed=7):
+        ref = _syn["roar"](sec, vol, seed)
+        y = _rec("fire_roar", ref, seed, idx=0, mono=True)
+        return (0.6 * y + 0.4 * ref).astype(np.float32)       # recorded fire over the synth's low end (mono: it is swept)
+
+    def rumble(sec, vol=0.6, seed=6):
+        return _rec("rumble", _syn["rumble"](sec, vol, seed), seed, idx=1)
+
+    def train_horn(sec=3.5, vol=0.1):
+        return _rec("train_horn", _syn["train_horn"](sec, vol), 0, idx=0)
+
+    def click(vol=0.4, heavy=False):
+        ref = _syn["click"](vol, heavy)
+        y = FX.hit("cassette", 1, pre=0.01, length=0.3)
+        return FX.match_peak(y, ref) if y is not None else ref
+
+
+def v3_layers():
+    """recorded layers that had no synth counterpart"""
+    if not SAMPLED:
+        return
+    S = fr
+
+    def lay(key, t0, t1, ref_rms, pan=0.0, idx=None, seed=0, fade=0.6, bus="amb"):
+        n = int((t1 - t0) * SR)
+        y = FX.bed(key, n, seed, idx)
+        if y is None:
+            return
+        y = y * (ref_rms / (FX.rms(y) + 1e-9))
+        put(y, t0, 1.0, pan, bus=bus, fade=fade)
+
+    lvl = lambda f, *a: FX.rms(f(*a))
+    # the launch: a real rocket under the synth rumble and drums
+    lay("rocket", S(1450), S(1660), lvl(_syn["rumble"], 4.0, 0.22) * 0.6, idx=0, fade=0.4)
+    # loudspeaker static under the ground-station voice, and under the 1992 news on a neighbour's radio
+    lay("radio_static", S(1729), S(2101), lvl(tape_hiss, 3.0, 0.02) * 0.9, pan=0.1, idx=1, fade=0.3)
+    lay("radio_static", S(5160), S(5350), lvl(tape_hiss, 3.0, 0.02) * 0.6, pan=-0.45, idx=1, seed=3, fade=0.5)
+    # the labour-camp room in Abu Dhabi: a ceiling fan turning while he records the tapes (right side)
+    for a_, b_ in ((3121, 3360), (3841, 4080)):
+        lay("fan_hum", S(a_), S(b_), lvl(_syn["city_hum"], 3.0, 0.03, 4) * 0.8, pan=0.75, idx=0, seed=a_, fade=0.8)
+    # desert wind behind the construction site at dusk (right side, two lives)
+    lay("wind_desert", S(2401), S(4570), lvl(_syn["city_hum"], 3.0, 0.03, 6) * 0.55, pan=0.85, idx=0, fade=2.0)
+    # a jet-like roar as the burning satellite crosses over both of them (left to right)
+    y = FX.bed("flyby", int(5.5 * SR), 0, 0)
+    if y is not None:
+        y = y.mean(1) * (lvl(_syn["roar"], 3.0, 0.12, 21) / (FX.rms(y.mean(1)) + 1e-9))
+        sweep(y.astype(np.float32), S(5713) + 1.0, -0.9, 0.9, gain=0.55, bus="amb")
 
 
 # ------------------------------------------------------------------ voices
@@ -869,6 +979,7 @@ def limiter(x, ceiling=0.89, look=0.02, smooth=0.06):
 def main():
     print("building score + sfx ...")
     build()
+    v3_layers()
     print("placing voices ...")
     voices()
     music, amb, vo = BUS["music"], BUS["amb"], BUS["vo"]
@@ -882,7 +993,7 @@ def main():
     out = (music + amb + vo)[:N]
     vo_n = vo[:N]
     loud = rms_db(out[int(fr(400) * SR): int(fr(7000) * SR)])
-    gain = 10 ** ((-19.5 - loud) / 20)
+    gain = 10 ** ((-20.0 - loud) / 20)              # V3: half a dB more headroom for the recorded transients
     out = out * gain
     out, g = limiter(out, ceiling=0.89)
     out[: int(1.2 * SR)] *= np.linspace(0, 1, int(1.2 * SR), dtype=np.float32)[:, None]
