@@ -25,8 +25,9 @@ def note_midi(n):
 _cache = {}
 
 
-def load(path):
-    if path not in _cache:
+def load(path, norm=True):
+    key = (path, norm)
+    if key not in _cache:
         x, sr = sf.read(path, dtype="float32", always_2d=True)
         x = np.repeat(x, 2, 1) if x.shape[1] == 1 else x[:, :2]
         if sr != SR:
@@ -35,8 +36,14 @@ def load(path):
         e = np.abs(x).max(1)
         on = np.where(e > e.max() * 0.02)[0]
         a = max(0, (on[0] if len(on) else 0) - int(0.004 * SR))
-        _cache[path] = np.ascontiguousarray(x[a:])
-    return _cache[path]
+        x = np.ascontiguousarray(x[a:])
+        if norm:                                    # every note at the same loudness (-20 dBFS over its first second)
+            seg = x[int(0.05 * SR):int(1.2 * SR)]
+            r = float(np.sqrt(np.mean(seg ** 2))) if len(seg) else 0.0
+            if r > 1e-5:
+                x = x * (0.1 / r)
+        _cache[key] = x
+    return _cache[key]
 
 
 def measured_midi(x):
@@ -161,7 +168,7 @@ def inst(k):
     elif k == "harp":
         _I[k] = Inst(k, _pairs("Strings/Harp", r"KSHarp_([A-G]#?\d)_"), loop=False)
     elif k == "glock":
-        _I[k] = Inst(k, _pairs("Percussion/Glock", r"medium_([A-G]#?\d)\.wav"), loop=False)
+        _I[k] = Inst(k, _pairs("Percussion/Glock", r"medium_([A-G]#?\d)\.wav"), loop=False, check_octave=False)
     elif k == "flute":
         _I[k] = Inst(k, _pairs("Woodwinds/Flute/susvib", r"susvib_([A-G]#?\d)_v1_1"), loop=True)
     else:
@@ -171,12 +178,13 @@ def inst(k):
 
 
 def one_shot(rel):
-    return load(os.path.join(V, rel))
+    return load(os.path.join(V, rel), norm=False)
 
 
 # ------------------------------------------------------------------ calibration against the synth voices
 # (gains chosen so a sampled note has about the RMS of the synthesized one it replaces; see tests/sampler_cal.py)
-CAL = {"piano": 0.55, "strings": 0.42, "glock": 0.30, "drum": 0.75, "boom_drum": 0.45}
+# measured with tests/sampler_cal.py after per-note normalisation; each family sits ~1 dB under the synth it replaces
+CAL = {"piano": 0.46, "violin": 0.26, "viola": 0.19, "cello": 0.22, "bass": 0.35, "glock": 0.22, "drum": 0.36, "boom_drum": 0.25}
 
 
 def string_section(midi):
