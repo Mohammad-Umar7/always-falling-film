@@ -689,6 +689,37 @@ def P_I4W():
     li.data.keyframe_insert("energy", frame=1)
     li.data.energy = 120.0
     li.data.keyframe_insert("energy", frame=200)
+    if af.v5():
+        # V5: the father's point of view - straight up the wall at his son leaning over the parapet, on a long lens
+        # (the reverse of J1, which looks down at the father). V3/V4 framed both from behind the father and the son
+        # stayed a speck at the top of a pink wall. The son leans further over as he recognises him.
+        look = poses.merge(poses.STAND, poses.LOOK_DOWN, {"spine03": (22, 0, 0), "spine02": (10, 0, 0), "upperarm01.L": (34, 0, -30), "upperarm01.R": (34, 0, 30), "lowerarm01.L": (30, 0, 0), "lowerarm01.R": (30, 0, 0)})
+        lean = poses.merge(look, {"spine03": (28, 0, 0), "neck01": (18, 0, 0), "head": (20, 0, 6)})
+        poses.key_sequence(son, [(1, look), (70, look), (130, lean), (240, lean)], step=2)
+        sc = bpy.context.scene
+        sc.frame_set(1)
+        bpy.context.view_layer.update()
+        # his hands grip the outer edge of the parapet (found by ray casting down beside him)
+        dg = bpy.context.evaluated_depsgraph_get()
+        edge, top = None, None
+        for k in range(60):
+            y = -5.0 - 0.02 * k
+            hit, loc, *_ = sc.ray_cast(dg, Vector((2.1, y, 2.5)), Vector((0, 0, -1)), distance=4.0)
+            if hit and loc.z > 0.5:
+                edge, top = y, loc.z
+        if edge is not None:
+            for side, dx in (("L", 0.27), ("R", -0.27)):
+                scene_b.ik_arm(son, side, Vector((1.3 + dx, edge + 0.07, top + 0.04)))
+        pf, ps = fa.pose.bones["head"], son.pose.bones["head"]
+        f_eye = fa.matrix_world @ pf.head.lerp(pf.tail, 0.45)
+        s_face = son.matrix_world @ ps.head.lerp(ps.tail, 0.45)
+        # the burning sky's glow on his face stays after the streak itself fades
+        af.add_point("son_fill", (1.4, -6.4, -2.6), "#FFB08A", energy=400.0, radius=1.5)
+        cam0 = f_eye + Vector((0.12, 0.30, 0.05))
+        tgt = s_face + Vector((0.0, -0.06, 0.03))                 # face a little below centre, sky above him
+        S.cam_up("cam", [(1, tuple(cam0), tuple(tgt), 185.0), (240, tuple(cam0 + Vector((0, 0.02, 0.06))), tuple(tgt), 205.0)], up=(0.0, -0.35, 1.0))
+        print("AF: I4W parapet edge", edge, top)
+        return S
     # the sky's point of view (rhymes with B4a): straight down, the lane between them collapses to a hand's width
     # from the lane, just behind the father's shoulder: he looks up at his son leaning over the parapet above
     # (found by ray casting, tests/cam_search.py: both faces unoccluded, 22 degrees apart)
