@@ -86,3 +86,7 @@ poetic licence.
   every shot (ray-cast against the set and checked so no character leaves the frame), voice-driven head and hand
   gestures for whoever speaks, the father's walk home up the lane, kites over the Old City, anime line art traced
   from every frame, painted wide shots (Kuwahara), impact frames on every big beat, meteors, and a reframed reveal.
+- **V5:** after the V4 audit (the son was still a speck in the reveal): the reveal re-cut as the father's point of
+  view, a long lens straight up the wall at his son gripping the parapet while burning pieces of the satellite cross
+  the sky above him; the reveal's focus finally lands on the son (a duplicated settings key had dropped it); people
+  glance aside and back in the calm shots of the 1975-1992 montage.
