@@ -160,6 +160,46 @@ def depth_of_field(cam, sid, rigs):
     cam.data.dof.aperture_blades = 6
 
 
+def environment_life(n_frames, seed):
+    """the world moves too: washing on the line flaps, neem trees sway, clouds drift"""
+    import af
+    rnd = random.Random(seed)
+    n = 0
+    for ob in list(bpy.data.objects):
+        nm = ob.name
+        if ob.type != "MESH":
+            continue
+        if "_line_c" in nm:                                  # hanging washing: gusty flap
+            amps, scale = (5.0, 3.0, 0.0), 14
+        elif nm.startswith("neem"):                          # canopies sway slowly
+            amps, scale = (1.0, 1.0, 0.0), 55
+        elif nm.startswith("cloud"):                         # clouds drift across the sky
+            if ob.animation_data is None or ob.animation_data.action is None:
+                x0 = ob.location.x
+                ob.keyframe_insert("location", index=0, frame=1)
+                ob.location.x = x0 + 0.12 * n_frames
+                ob.keyframe_insert("location", index=0, frame=n_frames)
+                ob.location.x = x0
+                for fc in af._fcurves(ob.animation_data.action):
+                    for kp in fc.keyframe_points:
+                        kp.interpolation = "LINEAR"
+                n += 1
+            continue
+        else:
+            continue
+        if ob.animation_data is None or ob.animation_data.action is None:
+            ob.keyframe_insert("rotation_euler", frame=1)
+        for fc in af._fcurves(ob.animation_data.action):
+            if fc.data_path == "rotation_euler" and amps[fc.array_index] > 0:
+                m = fc.modifiers.new("NOISE")
+                m.blend_type = "ADD"
+                m.strength = math.radians(amps[fc.array_index]) * 2
+                m.scale = scale
+                m.phase = rnd.uniform(0, 100)
+        n += 1
+    return n
+
+
 def apply(sid, n_frames):
     """call from Shot.finish() after all acting is baked"""
     scene = bpy.context.scene
@@ -167,7 +207,8 @@ def apply(sid, n_frames):
     for i, r in enumerate(rigs):
         base = r.name.split(".")[0]
         breathe_and_idle(r, sid, base, n_frames, seed=hash((sid, base)) % 10000 + i)
+    env = environment_life(n_frames, seed=hash(sid) % 1000)
     cam = scene.camera
     camera_life(cam, sid, n_frames, seed=hash(sid) % 10000)
     depth_of_field(cam, sid, rigs)
-    print("AF: life pass", sid, [r.name for r in rigs], "dof" if SHOT.get(sid, {}).get("dof") else "")
+    print("AF: life pass", sid, [r.name for r in rigs], "env", env, "dof" if SHOT.get(sid, {}).get("dof") else "")
