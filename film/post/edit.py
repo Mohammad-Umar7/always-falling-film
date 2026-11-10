@@ -716,11 +716,11 @@ def text_overlay(img, f):
             d.text(((W - tw) / 2 + 2, y + 2), txt, font=fn, fill=(0, 0, 0, int(200 * a_in)))
             d.text(((W - tw) / 2, y), txt, font=fn, fill=(255, 246, 230, int(255 * a_in)))
     for (a, b, txt) in subs:
-        fn = font(F_SUB, 40)
+        fn = font(F_SUB, 48)                     # V6: bigger for phone screens (was 40)
         a_in = min(1.0, (f - a) / 4.0, (b - f) / 4.0)
         tw = d.textlength(txt, font=fn)
-        x, y = (W - tw) / 2, 965
-        d.rounded_rectangle([x - 26, y - 8, x + tw + 26, y + 56], radius=16, fill=(6, 6, 14, int(120 * a_in)))
+        x, y = (W - tw) / 2, 946
+        d.rounded_rectangle([x - 28, y - 10, x + tw + 28, y + 68], radius=18, fill=(6, 6, 14, int(120 * a_in)))
         for ox, oy in ((-2, 0), (2, 0), (0, -2), (0, 2), (2, 2)):
             d.text((x + ox, y + oy), txt, font=fn, fill=(0, 0, 0, int(200 * a_in)))
         d.text((x, y), txt, font=fn, fill=(255, 255, 255, int(255 * a_in)))
