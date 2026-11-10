@@ -688,8 +688,8 @@ def text_overlay(img, f):
         if style in ("log", "stamp"):
             n = int((f - a) * (0.9 if style == "log" else 1.4))
             shown = txt[:max(0, n)]
-            fn = font(F_LOG, 30 if style == "log" else 26)
-            y = {"bl": 960, "bl2": 1000, "bl3": 1040, "br_half": 960, "tc": 96}[where]
+            fn = font(F_LOG, 34 if style == "log" else 26)              # V6: logs 30 -> 34 px and lifted off the bottom edge
+            y = {"bl": 940, "bl2": 984, "bl3": 1028, "br_half": 940, "tc": 96}[where]
             x = 1040 if where == "br_half" else 80
             if style == "stamp" and where == "tc":
                 fn2 = font(F_TITLE, 44)
@@ -707,7 +707,7 @@ def text_overlay(img, f):
             d.text((x, y), shown, font=fn, fill=col)
             if n < len(txt) + 30 and (f // 8) % 2 == 0:
                 tw = d.textlength(shown, font=fn)
-                d.rectangle([x + tw + 4, y + 4, x + tw + 18, y + 32], fill=col)
+                d.rectangle([x + tw + 4, y + 5, x + tw + 20, y + 36], fill=col)
         elif style == "end":
             fn = font(F_TITLE, 58)
             a_in = min(1.0, (f - a) / 24.0) * fade
