@@ -108,6 +108,15 @@ def vgrad(h, w):
     return _grad_cache[k]
 
 
+LIFT = os.path.exists(os.path.join(ROOT, "lift.flag")) or os.environ.get("AF_LIFT") == "1"
+
+
+def lift(img, g=0.86):
+    """night scenes for phone screens: a gamma lift on luminance (hue and saturation kept, black and white points fixed)"""
+    l = lum(img)[..., None]
+    return img * (np.power(np.clip(l, 0, 1), g) / np.maximum(l, 1e-4))
+
+
 def grade(img, kind):
     if kind == "night":
         img = saturate(img, 1.32)
@@ -116,6 +125,8 @@ def grade(img, kind):
         sh = np.clip(1 - lum(img)[..., None] * 3, 0, 1)
         img = img + sh * np.array([0.02, 0.0, 0.05], np.float32)
         img = contrast(img, 1.06)
+        if LIFT:
+            img = lift(img)
     elif kind == "dusk":
         img = saturate(img, 1.25)
         img = contrast(img, 1.05)
