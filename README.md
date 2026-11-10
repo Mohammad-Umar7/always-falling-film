@@ -90,3 +90,7 @@ poetic licence.
   view, a long lens straight up the wall at his son gripping the parapet while burning pieces of the satellite cross
   the sky above him; the reveal's focus finally lands on the son (a duplicated settings key had dropped it); people
   glance aside and back in the calm shots of the 1975-1992 montage.
+- **V6:** for phone screens and a living background: subtitles and mission-log text enlarged, a gentle lift on the
+  night grade so faces and rooftops read on a phone (hue and black/white points kept), the Abu Dhabi cranes swing
+  through every skyline shot with blinking warning lights, and in 1980 the father covers his eyes after his own
+  taped "look after Ammi". Submitted as AlwaysFalling_MohammadUmar.mp4.
